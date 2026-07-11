@@ -1,5 +1,5 @@
 import { state, brl, esc, todayISO, monthKey, monthLabel, shiftMonth, inMonth, sum,
-         monthToDay, byCategory, insights } from '../store.js'
+         expensesIn, incomesIn, monthToDay, byCategory, insights } from '../store.js'
 import { card, stat, chip, catRow, txRow, empty } from '../ui.js'
 import { ALLOWED } from '../supabase.js'
 import { installAvailable, promptInstall } from '../install.js'
@@ -7,7 +7,7 @@ import { installAvailable, promptInstall } from '../install.js'
 function paceChip() {
   const today = todayISO(), ym = monthKey(today), day = Number(today.slice(8, 10))
   const prevYm = shiftMonth(ym, -1)
-  const cur = sum(inMonth(ym))
+  const cur = sum(expensesIn(ym))
   const prevSameDay = monthToDay(prevYm, day)
   if (!prevSameDay) return ''
   const d = (cur - prevSameDay) / prevSameDay * 100
@@ -17,7 +17,8 @@ function paceChip() {
 
 export function renderResumo(el) {
   const today = todayISO(), ym = monthKey(today)
-  const cur = inMonth(ym), total = sum(cur)
+  const cur = expensesIn(ym), total = sum(cur)
+  const inTotal = sum(incomesIn(ym))
   const day = Number(today.slice(8, 10))
   const daysInMonth = new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 0).getDate()
   const projection = day >= 3 && total > 0 ? total / day * daysInMonth : null
@@ -33,7 +34,10 @@ export function renderResumo(el) {
           label: `Gastamos em ${monthLabel(ym)}`,
           value: brl(total),
           chip: paceChip(),
-          hint: projection ? `No ritmo atual: ~${brl(projection)} até o fim do mês` : '',
+          hint: [
+            inTotal ? `Recebemos ${brl(inTotal)} · Saldo ${brl(inTotal - total)}` : '',
+            projection ? `No ritmo atual: ~${brl(projection)} até o fim do mês` : '',
+          ].filter(Boolean).join('<br>'),
         })}
       </div>
 

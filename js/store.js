@@ -6,13 +6,26 @@ import { sb } from './supabase.js'
 export const CATS = {
   'Alimentação':'🍔', 'Mercado':'🛒', 'Transporte':'🚗', 'Moradia':'🏠', 'Saúde':'💊',
   'Educação':'📚', 'Lazer':'🎉', 'Assinaturas':'📺', 'Vestuário':'👕', 'Outros':'📦',
+  // receitas
+  'Salário':'💼', 'Freela':'💻', 'Reembolso':'↩️', 'Investimentos':'📈', 'Outros recebimentos':'💰',
 }
+export const INCOME_CATS = ['Salário', 'Freela', 'Reembolso', 'Investimentos', 'Outros recebimentos']
+export const EXPENSE_CATS = ['Alimentação', 'Mercado', 'Transporte', 'Moradia', 'Saúde',
+  'Educação', 'Lazer', 'Assinaturas', 'Vestuário', 'Outros']
+
+export const isIncome = r => (r.tipo || 'despesa') === 'receita'
+export const isExpenseRec = r => !isIncome(r)
+/** Distinct card names already used — feeds the cartão datalist. */
+export const knownCards = () =>
+  [...new Set(state.rows.map(r => r.cartao).filter(Boolean))].sort()
 
 // Category identity colors (Copilot-Money-style): tiles + bars, both themes.
 export const CAT_COLORS = {
   'Alimentação':'#f59e0b', 'Mercado':'#22c55e', 'Transporte':'#3b82f6', 'Moradia':'#a78bfa',
   'Saúde':'#f43f5e', 'Educação':'#eab308', 'Lazer':'#ec4899', 'Assinaturas':'#06b6d4',
   'Vestuário':'#8b5cf6', 'Outros':'#9ca3af',
+  'Salário':'#10b981', 'Freela':'#34d399', 'Reembolso':'#2dd4bf', 'Investimentos':'#4ade80',
+  'Outros recebimentos':'#6ee7b7',
 }
 
 export const state = { rows: [], user: null }
@@ -43,6 +56,8 @@ export const fmtBRDate = iso => {
 /* ---- aggregation ---- */
 export const sum = a => a.reduce((s, r) => s + Number(r.valor || 0), 0)
 export const inMonth = ym => state.rows.filter(r => monthKey(dateOf(r)) === ym)
+export const expensesIn = ym => inMonth(ym).filter(isExpenseRec)
+export const incomesIn = ym => inMonth(ym).filter(isIncome)
 
 export function byCategory(rows) {
   const m = {}
@@ -52,14 +67,14 @@ export function byCategory(rows) {
 
 /** Spend in `ym` up to (and incl.) day-of-month `day` — for honest comparisons. */
 export const monthToDay = (ym, day) =>
-  sum(inMonth(ym).filter(r => Number(dateOf(r).slice(8, 10)) <= day))
+  sum(expensesIn(ym).filter(r => Number(dateOf(r).slice(8, 10)) <= day))
 
 /** Waterfall input: how each category changed vs last month (same-day cutoff). */
 export function monthDeltas(topN = 6) {
   const today = todayISO(), ym = monthKey(today), day = Number(today.slice(8, 10))
   const prev = shiftMonth(ym, -1)
-  const curCat = Object.fromEntries(byCategory(inMonth(ym)))
-  const prevCat = Object.fromEntries(byCategory(inMonth(prev).filter(r => Number(dateOf(r).slice(8, 10)) <= day)))
+  const curCat = Object.fromEntries(byCategory(expensesIn(ym)))
+  const prevCat = Object.fromEntries(byCategory(expensesIn(prev).filter(r => Number(dateOf(r).slice(8, 10)) <= day)))
   const cats = [...new Set([...Object.keys(curCat), ...Object.keys(prevCat)])]
   let deltas = cats
     .map(c => ({ cat: c, delta: (curCat[c] || 0) - (prevCat[c] || 0) }))
@@ -70,14 +85,14 @@ export function monthDeltas(topN = 6) {
     deltas = deltas.slice(0, topN)
     if (Math.abs(rest) >= 1) deltas.push({ cat: 'Outras', delta: rest })
   }
-  return { prevYm: prev, ym, day, prevTotal: monthToDay(prev, day), curTotal: sum(inMonth(ym)), deltas }
+  return { prevYm: prev, ym, day, prevTotal: monthToDay(prev, day), curTotal: sum(expensesIn(ym)), deltas }
 }
 
 /** The app's core: what is draining the money. Never per-person. */
 export function insights() {
   const today = todayISO(), ym = monthKey(today), day = Number(today.slice(8, 10))
   const daysInMonth = new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 0).getDate()
-  const cur = inMonth(ym), total = sum(cur)
+  const cur = expensesIn(ym), total = sum(cur)
   const out = []
   if (!total) return out
 
@@ -86,10 +101,10 @@ export function insights() {
   const share = topVal / total * 100
   if (share >= 25) out.push(`💧 <b>${esc(topCat)}</b> é o maior dreno do mês: ${share.toFixed(0)}% de tudo (${brl(topVal)})`)
 
-  const prevMonths = [-1, -2, -3].map(n => shiftMonth(ym, n)).filter(m => inMonth(m).length)
+  const prevMonths = [-1, -2, -3].map(n => shiftMonth(ym, n)).filter(m => expensesIn(m).length)
   if (prevMonths.length && day >= 5) {
     for (const [c, v] of cats.slice(0, 6)) {
-      const avg = prevMonths.reduce((s, m) => s + sum(inMonth(m).filter(r => r.categoria === c)), 0) / prevMonths.length
+      const avg = prevMonths.reduce((s, m) => s + sum(expensesIn(m).filter(r => r.categoria === c)), 0) / prevMonths.length
       const proj = v / day * daysInMonth
       if (avg >= 50 && proj > avg * 1.25)
         out.push(`📈 <b>${esc(c)}</b> acelerou: ritmo de ${brl(proj)} este mês (+${((proj / avg - 1) * 100).toFixed(0)}% vs média)`)

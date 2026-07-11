@@ -49,6 +49,56 @@ export function monthlyBars(el, items) {
 }
 
 /**
+ * Cash-flow waterfall: income categories build up (green), expense
+ * categories draw down (red), final bar = month balance (accent).
+ */
+export function flowWaterfall(el, { incomes, expenses, saldo }) {
+  const items = [
+    ...incomes.map(i => ({ label: i.cat, delta: i.val })),
+    ...expenses.map(e => ({ label: e.cat, delta: -e.val })),
+  ]
+  const labels = [...items.map(i => i.label), 'Saldo']
+  const placeholder = [], change = []
+  let run = 0
+  for (const it of items) {
+    placeholder.push(Math.round(Math.min(run, run + it.delta) * 100) / 100)
+    change.push({
+      value: Math.round(Math.abs(it.delta) * 100) / 100,
+      delta: it.delta,
+      itemStyle: { color: it.delta >= 0 ? css('--color-positive') : css('--color-negative'), borderRadius: 4 },
+    })
+    run += it.delta
+  }
+  placeholder.push(saldo >= 0 ? 0 : saldo)
+  change.push({
+    value: Math.round(Math.abs(saldo) * 100) / 100,
+    itemStyle: { color: css('--color-primary'), borderRadius: [6, 6, 0, 0] },
+  })
+  return mount(el, {
+    grid: { left: 8, right: 8, top: 12, bottom: 8, containLabel: true },
+    tooltip: {
+      ...baseTooltip(),
+      formatter: ps => {
+        const p = ps.find(x => x.seriesIndex === 1)
+        if (!p) return ''
+        const d = p.data.delta
+        if (d === undefined) return `<b>Saldo</b><br>${brl(saldo)}`
+        return `<b>${p.name}</b><br>${d >= 0 ? '▲ entrou' : '▼ saiu'} ${brl(Math.abs(d))}`
+      },
+    },
+    xAxis: {
+      type: 'category', data: labels, ...baseAxis(), splitLine: { show: false },
+      axisLabel: { ...baseAxis().axisLabel, interval: 0, rotate: labels.length > 5 ? 35 : 0 },
+    },
+    yAxis: { type: 'value', ...baseAxis(), axisLabel: { ...baseAxis().axisLabel, formatter: v => brlShort(v) } },
+    series: [
+      { type: 'bar', stack: 'f', itemStyle: { color: 'transparent' }, emphasis: { itemStyle: { color: 'transparent' } }, data: placeholder, tooltip: { show: false } },
+      { type: 'bar', stack: 'f', data: change, barMaxWidth: 34 },
+    ],
+  })
+}
+
+/**
  * Waterfall: last month → per-category change → this month.
  * Spending increases are negative-red, decreases positive-green.
  */

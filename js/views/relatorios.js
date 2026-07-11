@@ -1,13 +1,16 @@
 import { state, brl, todayISO, monthKey, monthLabel, shiftMonth, inMonth, sum,
-         byCategory, monthDeltas, dateOf } from '../store.js'
+         expensesIn, incomesIn, isExpenseRec, byCategory, monthDeltas, dateOf } from '../store.js'
 import { card, catRow, empty } from '../ui.js'
-import { monthlyBars, waterfall } from '../charts.js'
+import { monthlyBars, waterfall, flowWaterfall } from '../charts.js'
 
 export function renderRelatorios(el, repRange, onRange) {
   const ym = monthKey(todayISO())
   const n = repRange === '3m' ? 4 : 12
   const months = Array.from({ length: n }, (_, i) => shiftMonth(ym, -(n - 1 - i)))
-  const period = state.rows.filter(r => monthKey(dateOf(r)) >= months[0])
+  const period = state.rows.filter(r => monthKey(dateOf(r)) >= months[0] && isExpenseRec(r))
+  const incomesNow = byCategory(incomesIn(ym)).map(([cat, val]) => ({ cat, val }))
+  const expensesNow = byCategory(expensesIn(ym)).map(([cat, val]) => ({ cat, val }))
+  const saldoNow = incomesNow.reduce((a, i) => a + i.val, 0) - expensesNow.reduce((a, e) => a + e.val, 0)
   const totalPeriod = sum(period)
   const monthsWithData = new Set(period.map(r => monthKey(dateOf(r)))).size || 1
   const cats = byCategory(period)
@@ -42,6 +45,16 @@ export function renderRelatorios(el, repRange, onRange) {
       </section>
 
       <section class="l-span2">
+        <h2>Fluxo de ${monthLabel(ym, 'short')}: entradas × saídas</h2>
+        ${incomesNow.length
+          ? card(`<div id="chart-flow" class="c-chart c-chart--tall" role="img"
+                  aria-label="Fluxo do mês: entradas e saídas por categoria"></div>
+                  <p class="muted small" style="text-align:center;margin-top:4px">
+                    verde = entrou · vermelho = saiu · azul = saldo do mês</p>`)
+          : card(empty('💰', 'Nenhuma entrada registrada este mês ainda — envie um comprovante de recebimento ou adicione pelo +.'))}
+      </section>
+
+      <section class="l-span2">
         <h2>Por categoria no período</h2>
         ${card(cats.length
           ? cats.map(([name, value]) => catRow({ name, value, max: maxCat, aside: `${brl(value / monthsWithData)}/mês` })).join('')
@@ -53,9 +66,12 @@ export function renderRelatorios(el, repRange, onRange) {
 
   monthlyBars(el.querySelector('#chart-months'), months.map(m => ({
     label: monthLabel(m, 'short').replace('.', ''),
-    value: sum(inMonth(m)),
+    value: sum(expensesIn(m)),
     on: m === ym,
   })))
+
+  if (incomesNow.length) flowWaterfall(el.querySelector('#chart-flow'),
+    { incomes: incomesNow, expenses: expensesNow, saldo: saldoNow })
 
   if (wf.deltas.length) waterfall(el.querySelector('#chart-wf'), {
     prevLabel: monthLabel(wf.prevYm, 'short').replace('.', ''),

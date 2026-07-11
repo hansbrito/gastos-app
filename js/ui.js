@@ -1,6 +1,6 @@
 // Reusable component renderers. Pure functions: data in → HTML string out.
 // All dynamic text goes through esc() — no exceptions.
-import { esc, brl, CATS, CAT_COLORS, dateOf } from './store.js'
+import { esc, brl, CATS, CAT_COLORS, dateOf, isIncome } from './store.js'
 
 /* ---- Icon set (Lucide-style strokes, currentColor) ---- */
 const PATHS = {
@@ -49,9 +49,9 @@ export const txRow = r => {
     <div class="c-tx__avatar" title="${esc(r.sender || '')}" aria-hidden="true">${esc(initial)}</div>
     <div class="c-tx__body">
       <div class="c-tx__title">${esc(r.estabelecimento || r.descricao || '—')}</div>
-      <div class="c-tx__meta">${d.slice(8,10)}/${d.slice(5,7)} · ${CATS[r.categoria] || ''} ${esc(r.categoria)}${r.metodo ? ' · ' + esc(r.metodo) : ''}</div>
+      <div class="c-tx__meta">${d.slice(8,10)}/${d.slice(5,7)} · ${CATS[r.categoria] || ''} ${esc(r.categoria)}${r.cartao ? ' · ' + esc(r.cartao) : (r.metodo ? ' · ' + esc(r.metodo) : '')}</div>
     </div>
-    <div class="c-tx__value num">${brl(Number(r.valor))}</div>
+    <div class="c-tx__value num" ${isIncome(r) ? 'style="color:var(--color-positive)"' : ''}>${isIncome(r) ? '+' : ''}${brl(Number(r.valor))}</div>
   </div>`
 }
 

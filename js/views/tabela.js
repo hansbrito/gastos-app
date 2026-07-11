@@ -1,5 +1,5 @@
 // Tabela: every expense of a month, tap a row to correct or delete it.
-import { state, brl, esc, todayISO, monthKey, monthLabel, shiftMonth, inMonth, sum, dateOf, CATS } from '../store.js'
+import { state, brl, esc, todayISO, monthKey, monthLabel, shiftMonth, inMonth, sum, dateOf, CATS, isIncome, isExpenseRec } from '../store.js'
 import { card, empty } from '../ui.js'
 import { openExpenseSheet } from './expense-sheet.js'
 
@@ -23,7 +23,7 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
       <div class="c-table-wrap">
         <table class="c-table">
           <thead><tr>
-            <th>Data</th><th>Onde</th><th>Categoria</th><th style="text-align:right">Valor</th>
+            <th>Data</th><th>Onde</th><th>Categoria</th><th>Cartão</th><th style="text-align:right">Valor</th>
           </tr></thead>
           <tbody>
             ${rows.map((r, i) => {
@@ -32,13 +32,14 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
                 <td class="t-muted num">${d.slice(8,10)}/${d.slice(5,7)}</td>
                 <td>${esc(r.estabelecimento || r.descricao || '—')}</td>
                 <td class="t-cat">${CATS[r.categoria] || ''} ${esc(r.categoria)}</td>
-                <td class="t-num num">${brl(Number(r.valor))}</td>
+                <td class="t-muted">${esc(r.cartao || '—')}</td>
+                <td class="t-num num" ${isIncome(r) ? 'style="color:var(--color-positive)"' : ''}>${isIncome(r) ? '+' : ''}${brl(Number(r.valor))}</td>
               </tr>`
             }).join('')}
           </tbody>
           <tfoot><tr>
-            <th colspan="3" style="border-bottom:0">Total · ${rows.length} lançamento${rows.length > 1 ? 's' : ''}</th>
-            <th class="t-num num" style="border-bottom:0;font-size:var(--text-sm);color:var(--color-text)">${brl(sum(rows))}</th>
+            <th colspan="4" style="border-bottom:0">Saídas ${brl(sum(rows.filter(isExpenseRec)))} · Entradas ${brl(sum(rows.filter(isIncome)))} · ${rows.length} lançamento${rows.length > 1 ? 's' : ''}</th>
+            <th class="t-num num" style="border-bottom:0;font-size:var(--text-sm);color:var(--color-text)">${brl(sum(rows.filter(isIncome)) - sum(rows.filter(isExpenseRec)))}</th>
           </tr></tfoot>
         </table>
       </div>
