@@ -213,12 +213,58 @@ function paceChip() {
   return `<span class="chip ${cls}">${arrow} ${Math.abs(d).toFixed(0)}% vs ${monthLabel(prevYm,'short')} até o dia ${day}</span>`
 }
 
+/* "What is draining our money" — the app's whole reason to exist.
+   Never compares Hans vs Bia; only where the money goes and what's growing. */
+function insights() {
+  const today = todayISO(), ym = monthKey(today), day = Number(today.slice(8, 10))
+  const daysInMonth = new Date(Number(ym.slice(0,4)), Number(ym.slice(5,7)), 0).getDate()
+  const cur = inMonth(ym), total = sum(cur)
+  const out = []
+  if (!total) return out
+
+  const byCat = {}
+  for (const r of cur) byCat[r.categoria] = (byCat[r.categoria] || 0) + Number(r.valor)
+  const cats = Object.entries(byCat).sort((a,b) => b[1] - a[1])
+
+  // 1. the single biggest drain right now
+  const [topCat, topVal] = cats[0]
+  const share = topVal / total * 100
+  if (share >= 25) out.push(`💧 <b>${esc(topCat)}</b> é o maior dreno do mês: ${share.toFixed(0)}% de tudo (${brl(topVal)})`)
+
+  // 2. categories accelerating vs the average of the 3 previous months
+  const prevMonths = [-1, -2, -3].map(n => shiftMonth(ym, n)).filter(m => inMonth(m).length)
+  if (prevMonths.length && day >= 5) {
+    for (const [c, v] of cats.slice(0, 6)) {
+      const avg = prevMonths.reduce((s, m) => s + sum(inMonth(m).filter(r => r.categoria === c)), 0) / prevMonths.length
+      const proj = v / day * daysInMonth
+      if (avg >= 50 && proj > avg * 1.25)
+        out.push(`📈 <b>${esc(c)}</b> acelerou: ritmo de ${brl(proj)} este mês (+${((proj/avg - 1) * 100).toFixed(0)}% vs média)`)
+      if (out.length >= 3) break
+    }
+  }
+
+  // 3. repeat offenders: same place, many times
+  if (out.length < 3) {
+    const byPlace = {}
+    for (const r of cur) {
+      const k = (r.estabelecimento || '').toLowerCase().trim()
+      if (!k) continue
+      byPlace[k] = byPlace[k] || { n: 0, v: 0, name: r.estabelecimento }
+      byPlace[k].n++; byPlace[k].v += Number(r.valor)
+    }
+    const rep = Object.values(byPlace).filter(p => p.n >= 3).sort((a,b) => b.v - a.v)[0]
+    if (rep) out.push(`🔁 <b>${esc(rep.name)}</b>: ${rep.n}× este mês, ${brl(rep.v)} no total`)
+  }
+  return out.slice(0, 3)
+}
+
 function viewResumo() {
   const today = todayISO(), ym = monthKey(today)
   const cur = inMonth(ym), total = sum(cur)
   const day = Number(today.slice(8, 10))
   const daysInMonth = new Date(Number(ym.slice(0,4)), Number(ym.slice(5,7)), 0).getDate()
   const projection = day >= 3 && total > 0 ? total / day * daysInMonth : null
+  const tips = insights()
 
   // categories, biggest first, with share bars
   const byCat = {}
@@ -234,6 +280,12 @@ function viewResumo() {
       ${paceChip()}
       ${projection ? `<div class="muted small" style="margin-top:8px">No ritmo atual: ~${brl(projection)} até o fim do mês</div>` : ''}
     </div>
+
+    ${tips.length ? `
+    <h2>O que está drenando</h2>
+    <div class="card">
+      ${tips.map(t => `<div style="padding:8px 0; font-size:14px">${t}</div>`).join('')}
+    </div>` : ''}
 
     <h2>Para onde foi</h2>
     <div class="card">
