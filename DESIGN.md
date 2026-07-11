@@ -31,8 +31,10 @@ tokens as CSS custom properties, components as pure render functions.
 | Trend chip | `.c-chip --positive/--negative/--neutral` | `chip()` |
 | Category bar | `.c-cat` | `catRow()` |
 | Transaction | `.c-tx` | `txRow()` |
+| Data table | `.c-table` (rows tap-to-edit) | inline (tabela view) |
 | Segmented control | `.c-seg` (aria-selected) | inline |
-| Bottom nav + FAB | `.c-nav` (aria-current) | `nav()` |
+| Nav (bottom bar ≤900px, top bar above) + FAB | `.c-nav` / `.c-fab` | `nav()` |
+| SVG icon | `.c-ic` | `icon(name, size)` |
 | Bottom sheet | `.c-overlay/.c-sheet` | `sheet()` |
 | Toast | `.c-toast` (role=status) | `toast()` |
 | Skeleton / Empty | `.c-skel` / `.c-empty` | `skeleton()` / `empty()` |
