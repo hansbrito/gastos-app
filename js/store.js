@@ -8,6 +8,13 @@ export const CATS = {
   'Educação':'📚', 'Lazer':'🎉', 'Assinaturas':'📺', 'Vestuário':'👕', 'Outros':'📦',
 }
 
+// Category identity colors (Copilot-Money-style): tiles + bars, both themes.
+export const CAT_COLORS = {
+  'Alimentação':'#f59e0b', 'Mercado':'#22c55e', 'Transporte':'#3b82f6', 'Moradia':'#a78bfa',
+  'Saúde':'#f43f5e', 'Educação':'#eab308', 'Lazer':'#ec4899', 'Assinaturas':'#06b6d4',
+  'Vestuário':'#8b5cf6', 'Outros':'#9ca3af',
+}
+
 export const state = { rows: [], user: null }
 
 /* ---- formatting ---- */

@@ -1,43 +1,43 @@
 /* ============================================================
-   Gastos Design System — tokens
-   Modern indigo/violet on zinc neutrals. Light by default,
-   dark via prefers-color-scheme. Components use ONLY the
-   semantic aliases — raw scales never leave this file.
+   Gastos Design System — tokens  ·  v3 "Pro"
+   Benchmark direction (Revolut / Copilot Money class):
+   true-neutral surfaces, hairline borders, one cobalt accent,
+   category colors carry the identity. Light + dark, manual
+   override via <html data-theme="light|dark">, auto otherwise.
    ============================================================ */
 :root {
-  /* brand scale */
-  --brand-300:#a5b4fc; --brand-400:#818cf8; --brand-500:#6366f1;
-  --brand-600:#4f46e5; --brand-900:#312e81;
-  --grad-primary:linear-gradient(135deg,#6366f1,#8b5cf6);
+  /* accent scale */
+  --accent-500:#2f6bff; --accent-400:#5c8dff; --accent-600:#1f56e0;
 
-  /* semantic aliases */
-  --color-bg:#f7f7f8;
+  /* semantic aliases — light */
+  --color-bg:#f6f6f8;
   --color-surface:#ffffff;
-  --color-surface-2:#f1f1f4;          /* wells, bars, hover */
-  --color-text:#18181b;
-  --color-text-muted:#71717a;
-  --color-border:#e4e4e7;
-  --color-primary:var(--brand-600);
-  --color-primary-soft:#e0e7ff;
+  --color-surface-2:#eef0f3;
+  --color-text:#101014;
+  --color-text-muted:#6e7076;
+  --color-border:#e6e7ea;
+  --color-primary:var(--accent-500);
+  --color-primary-strong:var(--accent-600);
+  --color-primary-soft:#e8eeff;
   --color-on-primary:#ffffff;
-  --color-positive:#059669;           /* spending went DOWN = good */
-  --color-negative:#e11d48;           /* spending went UP = bad    */
+  --color-positive:#0a9e6c;
+  --color-negative:#e5484d;
   --color-warning:#d97706;
-  --color-focus:var(--brand-500);
+  --color-focus:var(--accent-500);
 
-  /* typography — tabular numbers for money via .num */
-  --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  /* typography */
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   --text-xs:12px; --text-sm:13px; --text-base:15px; --text-md:17px;
-  --text-lg:22px; --text-xl:34px; --text-hero:40px;
+  --text-lg:22px; --text-xl:34px; --text-hero:42px;
   --leading:1.45;
 
   /* spacing — 4px grid */
   --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px;
 
   /* shape & elevation */
-  --radius-sm:12px; --radius-md:18px; --radius-full:999px;
-  --shadow-1:0 1px 3px rgba(24,24,27,.06);
-  --shadow-2:0 10px 30px rgba(24,24,27,.18);
+  --radius-sm:12px; --radius-md:16px; --radius-full:999px;
+  --shadow-1:0 1px 2px rgba(16,16,20,.05);
+  --shadow-2:0 12px 32px rgba(16,16,20,.16);
 
   /* layout */
   --content-max:520px;
@@ -46,21 +46,40 @@
   --touch-target:44px;
 }
 
+/* dark tokens — applied by manual override or by system preference */
+:root[data-theme="dark"] {
+  --color-bg:#0b0b0f;
+  --color-surface:#141419;
+  --color-surface-2:#1e1e25;
+  --color-text:#f4f4f6;
+  --color-text-muted:#9d9da8;
+  --color-border:#232329;
+  --color-primary:var(--accent-400);
+  --color-primary-strong:var(--accent-500);
+  --color-primary-soft:#1b2340;
+  --color-on-primary:#0a0f24;
+  --color-positive:#3ddc97;
+  --color-negative:#ff6369;
+  --color-warning:#fbbf24;
+  --shadow-1:none;
+  --shadow-2:0 12px 32px rgba(0,0,0,.55);
+}
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg:#09090b;
-    --color-surface:#18181b;
-    --color-surface-2:#26262b;
-    --color-text:#f4f4f5;
-    --color-text-muted:#9f9fa8;
-    --color-border:#2a2a30;
-    --color-primary:var(--brand-400);
-    --color-primary-soft:var(--brand-900);
-    --color-on-primary:#0e0d2e;
-    --color-positive:#34d399;
-    --color-negative:#fb7185;
+  :root:not([data-theme="light"]) {
+    --color-bg:#0b0b0f;
+    --color-surface:#141419;
+    --color-surface-2:#1e1e25;
+    --color-text:#f4f4f6;
+    --color-text-muted:#9d9da8;
+    --color-border:#232329;
+    --color-primary:var(--accent-400);
+    --color-primary-strong:var(--accent-500);
+    --color-primary-soft:#1b2340;
+    --color-on-primary:#0a0f24;
+    --color-positive:#3ddc97;
+    --color-negative:#ff6369;
     --color-warning:#fbbf24;
     --shadow-1:none;
-    --shadow-2:0 10px 30px rgba(0,0,0,.55);
+    --shadow-2:0 12px 32px rgba(0,0,0,.55);
   }
 }

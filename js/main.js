@@ -8,6 +8,8 @@ import { renderRelatorios } from './views/relatorios.js'
 import { renderTabela } from './views/tabela.js'
 import { openExpenseSheet } from './views/expense-sheet.js'
 import { registerSW } from './install.js'
+import { applyTheme, cycleTheme, currentTheme, ICONS, LABELS } from './theme.js'
+import { icon } from './ui.js'
 
 const $app = document.getElementById('app')
 let tab = 'resumo'
@@ -24,6 +26,9 @@ function render() {
   for (const b of $app.querySelectorAll('.c-nav [data-t]'))
     b.onclick = () => { tab = b.dataset.t; render(); scrollTo(0, 0) }
   $app.querySelector('#nav-add').onclick = () => openExpenseSheet({ onDone: render })
+  const themeBtn = $app.querySelector('#nav-theme')
+  themeBtn.innerHTML = `${icon(ICONS[currentTheme()], 20)}${LABELS[currentTheme()]}`
+  themeBtn.onclick = () => { cycleTheme(); render() } // re-render → charts pick up new palette
   const out = $app.querySelector('#out')
   if (out) out.onclick = () => signOut()
 }
@@ -48,6 +53,7 @@ function handleSession(session) {
   enter()
 }
 
+applyTheme()
 registerSW()
 const { data: { session } } = await sb.auth.getSession()
 handleSession(session)

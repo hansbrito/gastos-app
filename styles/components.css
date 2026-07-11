@@ -21,7 +21,7 @@
 .c-btn:hover { filter:brightness(1.05); }
 .c-btn:active { transform:scale(.98); }
 .c-btn:disabled { opacity:.5; cursor:default; }
-.c-btn--primary { background:var(--grad-primary); color:#fff; }
+.c-btn--primary { background:var(--color-primary); color:var(--color-on-primary); }
 .c-btn--ghost   { background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-text); }
 .c-btn--danger  { background:color-mix(in srgb, var(--color-negative) 12%, transparent); color:var(--color-negative); }
 .c-btn--link    { min-height:var(--touch-target); width:auto; margin:0 auto;
@@ -35,8 +35,8 @@
 /* ---- Stat (hero number) ---- */
 .c-stat { text-align:center; padding:var(--s-5) var(--s-4); }
 .c-stat__label { color:var(--color-text-muted); }
-.c-stat__value { font-size:var(--text-hero); font-weight:800; letter-spacing:-1.2px; margin:var(--s-1) 0;
-                 background:var(--grad-primary); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.c-stat__value { font-size:var(--text-hero); font-weight:800; letter-spacing:-1.5px; margin:var(--s-1) 0; }
+.c-stat__label { font-size:var(--text-xs); text-transform:uppercase; letter-spacing:1.2px; font-weight:600; }
 .c-stat__hint  { color:var(--color-text-muted); font-size:var(--text-sm); margin-top:var(--s-2); }
 
 /* ---- Chip ---- */
@@ -51,11 +51,12 @@
 .c-cat { display:flex; align-items:center; gap:var(--s-3); padding:var(--s-2) 0; }
 .c-cat__emoji { font-size:18px; width:36px; height:36px; flex:none;
                 display:flex; align-items:center; justify-content:center;
-                background:var(--color-surface-2); border-radius:var(--radius-sm); }
+                background:color-mix(in srgb, var(--cat-color, var(--color-text-muted)) 14%, transparent);
+                border-radius:var(--radius-sm); }
 .c-cat__body { flex:1; min-width:0; }
 .c-cat__line { display:flex; justify-content:space-between; font-weight:600; font-size:var(--text-sm); }
 .c-cat__bar { height:6px; border-radius:var(--radius-full); background:var(--color-surface-2); margin-top:5px; overflow:hidden; }
-.c-cat__bar i { display:block; height:100%; background:var(--grad-primary); border-radius:var(--radius-full); }
+.c-cat__bar i { display:block; height:100%; background:var(--cat-color, var(--color-primary)); border-radius:var(--radius-full); }
 .c-cat__aside { width:74px; text-align:right; flex:none; }
 
 /* ---- Transaction list item ---- */
@@ -64,9 +65,9 @@
         border-top:1px solid var(--color-border); }
 .c-tx:first-child { border-top:0; }
 .c-tx__avatar { width:34px; height:34px; border-radius:var(--radius-full);
-                background:var(--color-primary-soft); color:var(--color-primary);
+                background:var(--color-surface-2); color:var(--color-text-muted);
                 display:flex; align-items:center; justify-content:center;
-                font-weight:800; font-size:var(--text-sm); flex:none; }
+                font-weight:700; font-size:var(--text-sm); flex:none; }
 .c-tx__body { flex:1; min-width:0; }
 .c-tx__title { font-weight:600; font-size:var(--text-sm);
                white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -110,7 +111,7 @@
 .c-fab { position:fixed; right:var(--s-4); z-index:15;
          bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--s-4));
          width:56px; height:56px; border-radius:18px;
-         background:var(--grad-primary); color:#fff;
+         background:var(--color-primary); color:var(--color-on-primary);
          display:flex; align-items:center; justify-content:center;
          box-shadow:var(--shadow-2); transition:transform .1s; }
 .c-fab:active { transform:scale(.94); }
@@ -181,3 +182,7 @@
            justify-content:center; align-items:center; gap:var(--s-4); text-align:center; }
 .c-login .c-btn { max-width:340px; }
 .c-login__logo { width:84px; height:84px; border-radius:24px; box-shadow:var(--shadow-2); }
+
+/* ---- Theme toggle nav item ---- */
+.c-nav__item--theme { width:60px; color:var(--color-text-muted); }
+@media (min-width: 900px) { .c-nav__item--theme { width:auto; margin-left:auto; } }
