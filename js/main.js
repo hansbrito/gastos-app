@@ -6,6 +6,7 @@ import { renderLogin, renderBlocked } from './views/login.js'
 import { renderResumo } from './views/resumo.js'
 import { renderRelatorios } from './views/relatorios.js'
 import { renderTabela } from './views/tabela.js'
+import { renderCartoes } from './views/cartoes.js'
 import { openExpenseSheet } from './views/expense-sheet.js'
 import { registerSW } from './install.js'
 import { applyTheme, cycleTheme, currentTheme, ICONS, LABELS } from './theme.js'
@@ -21,7 +22,8 @@ function render() {
   const view = $app.querySelector('#view')
   if (tab === 'resumo') renderResumo(view)
   else if (tab === 'relatorios') renderRelatorios(view, repRange, r => { repRange = r; render() })
-  else renderTabela(view, tabelaYm, ym => { tabelaYm = ym; render() }, render)
+  else if (tab === 'tabela') renderTabela(view, tabelaYm, ym => { tabelaYm = ym; render() }, render)
+  else renderCartoes(view, render)
 
   for (const b of $app.querySelectorAll('.c-nav [data-t]'))
     b.onclick = () => { tab = b.dataset.t; render(); scrollTo(0, 0) }

@@ -102,7 +102,7 @@
          display:flex; justify-content:space-around; align-items:center; }
 .c-nav__brand { display:none; }
 .c-nav__item { display:flex; flex-direction:column; align-items:center; gap:2px;
-               width:76px; min-height:var(--touch-target); justify-content:center;
+               width:64px; min-height:var(--touch-target); justify-content:center;
                color:var(--color-text-muted); font-size:var(--text-xs); font-weight:600;
                border-radius:var(--radius-sm); }
 .c-nav__item[aria-current="page"] { color:var(--color-primary); }
@@ -184,5 +184,5 @@
 .c-login__logo { width:84px; height:84px; border-radius:24px; box-shadow:var(--shadow-2); }
 
 /* ---- Theme toggle nav item ---- */
-.c-nav__item--theme { width:60px; color:var(--color-text-muted); }
+.c-nav__item--theme { width:48px; color:var(--color-text-muted); }
 @media (min-width: 900px) { .c-nav__item--theme { width:auto; margin-left:auto; } }

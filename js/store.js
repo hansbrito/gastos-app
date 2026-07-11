@@ -17,7 +17,7 @@ export const isIncome = r => (r.tipo || 'despesa') === 'receita'
 export const isExpenseRec = r => !isIncome(r)
 /** Distinct card names already used — feeds the cartão datalist. */
 export const knownCards = () =>
-  [...new Set(state.rows.map(r => r.cartao).filter(Boolean))].sort()
+  [...new Set([...state.cartoes.map(c => c.nome), ...state.rows.map(r => r.cartao).filter(Boolean)])].sort()
 
 // Category identity colors (Copilot-Money-style): tiles + bars, both themes.
 export const CAT_COLORS = {
@@ -28,7 +28,7 @@ export const CAT_COLORS = {
   'Outros recebimentos':'#6ee7b7',
 }
 
-export const state = { rows: [], user: null }
+export const state = { rows: [], cartoes: [], dividas: [], user: null }
 
 /* ---- formatting ---- */
 export const brl = v => (v ?? 0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' })
@@ -129,10 +129,76 @@ export function insights() {
 /* ---- IO ---- */
 export async function loadRows() {
   const since = shiftMonth(monthKey(todayISO()), -12) + '-01'
-  const { data, error } = await sb.from('gastos').select('*').gte('data', since)
-    .order('data', { ascending: false }).order('created_at', { ascending: false })
+  const [g, c, d] = await Promise.all([
+    sb.from('gastos').select('*').gte('data', since)
+      .order('data', { ascending: false }).order('created_at', { ascending: false }),
+    sb.from('cartoes').select('*').order('nome'),
+    sb.from('dividas').select('*').order('credor'),
+  ])
+  if (g.error) throw g.error
+  state.rows = g.data
+  state.cartoes = c.data || []
+  state.dividas = d.data || []
+}
+
+/* ---- cartões & dívidas ---- */
+export async function saveCartao(row) {
+  const { error } = await sb.from('cartoes').upsert(row)
   if (error) throw error
-  state.rows = data
+  const i = state.cartoes.findIndex(c => c.id === row.id)
+  if (i >= 0) state.cartoes[i] = { ...state.cartoes[i], ...row }
+  else state.cartoes.push(row)
+  state.cartoes.sort((a, b) => a.nome.localeCompare(b.nome))
+}
+export async function deleteCartao(id) {
+  const { error } = await sb.from('cartoes').delete().eq('id', id)
+  if (error) throw error
+  state.cartoes = state.cartoes.filter(c => c.id !== id)
+}
+export async function saveDivida(row) {
+  const { error } = await sb.from('dividas').upsert(row)
+  if (error) throw error
+  const i = state.dividas.findIndex(d => d.id === row.id)
+  if (i >= 0) state.dividas[i] = { ...state.dividas[i], ...row }
+  else state.dividas.push(row)
+}
+export async function deleteDivida(id) {
+  const { error } = await sb.from('dividas').delete().eq('id', id)
+  if (error) throw error
+  state.dividas = state.dividas.filter(d => d.id !== id)
+}
+
+/** Open-statement window for a card given its closing day. */
+export function faturaWindow(card, todayIso = todayISO()) {
+  const d = new Date(todayIso + 'T12:00:00')
+  const start = new Date(d), end = new Date(d)
+  if (d.getDate() > card.dia_fechamento) {
+    start.setDate(card.dia_fechamento + 1)
+    end.setMonth(end.getMonth() + 1); end.setDate(card.dia_fechamento)
+  } else {
+    start.setMonth(start.getMonth() - 1); start.setDate(card.dia_fechamento + 1)
+    end.setDate(card.dia_fechamento)
+  }
+  const iso = x => x.toLocaleDateString('sv-SE')
+  return { start: iso(start), end: iso(end) }
+}
+
+/** Sum of the card's open statement from loaded rows (fuzzy name match). */
+export function faturaAberta(card) {
+  const { start, end } = faturaWindow(card)
+  const nome = card.nome.toLowerCase()
+  return sum(state.rows.filter(r => {
+    if (isIncome(r) || !r.cartao) return false
+    const rc = String(r.cartao).toLowerCase()
+    const match = rc === nome || rc.includes(nome) || nome.includes(rc)
+    return match && dateOf(r) >= start && dateOf(r) <= end
+  }))
+}
+
+export function parcelaAtual(dv, ym = monthKey(todayISO())) {
+  const [y1, m1] = dv.inicio_ym.split('-').map(Number)
+  const [y2, m2] = ym.split('-').map(Number)
+  return Math.min(Math.max((y2 - y1) * 12 + (m2 - m1) + 1, 1), dv.parcelas_total)
 }
 
 export async function addExpense(rec) {

@@ -10,6 +10,7 @@ const PATHS = {
   plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
   pencil: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
   install: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  creditcard: '<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>',
   google: '<circle cx="12" cy="12" r="10"/><path d="M17.13 12.2H12v2.5h2.92c-.4 1.4-1.54 2.3-2.92 2.3a3 3 0 0 1 0-6c.73 0 1.4.26 1.92.7l1.85-1.85A5.5 5.5 0 1 0 12 17.5c3.08 0 5.13-2.17 5.13-5.3z"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
@@ -86,6 +87,7 @@ const TABS = [
   ['resumo', 'home', 'Resumo'],
   ['relatorios', 'chart', 'Relatórios'],
   ['tabela', 'table', 'Tabela'],
+  ['cartoes', 'creditcard', 'Cartões'],
 ]
 export const nav = active => `
   <nav class="c-nav" aria-label="Navegação principal">
