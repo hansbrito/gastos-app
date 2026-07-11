@@ -1,0 +1,33 @@
+/* Base reset + global rules. Everything visual comes from tokens.css. */
+* { box-sizing:border-box; margin:0; -webkit-tap-highlight-color:transparent; }
+
+html { color-scheme: light dark; }
+
+body {
+  background:var(--color-bg);
+  color:var(--color-text);
+  font:var(--text-base)/var(--leading) var(--font-sans);
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
+}
+
+main { max-width:var(--content-max); margin:0 auto; padding:var(--s-4); }
+
+h1 { font-size:var(--text-lg); }
+h2 { font-size:var(--text-base); color:var(--color-text-muted); font-weight:600; margin:var(--s-5) 0 var(--s-3); }
+
+button { font:inherit; border:0; cursor:pointer; background:none; color:inherit; }
+
+/* money and figures always align in columns */
+.num { font-variant-numeric: tabular-nums; }
+
+/* accessible focus — keyboard only, not taps */
+:focus { outline:none; }
+:focus-visible { outline:2px solid var(--color-focus); outline-offset:2px; border-radius:4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation:none !important; transition:none !important; }
+}
+
+.muted { color:var(--color-text-muted); }
+.small { font-size:var(--text-sm); }
+.center { text-align:center; padding:var(--s-6) var(--s-4); }
