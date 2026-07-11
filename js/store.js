@@ -119,3 +119,17 @@ export async function addExpense(rec) {
   state.rows.unshift(rec)
   state.rows.sort((a, b) => dateOf(b).localeCompare(dateOf(a)))
 }
+
+export async function updateExpense(id, patch) {
+  const { error } = await sb.from('gastos').update(patch).eq('id', id)
+  if (error) throw error
+  const r = state.rows.find(r => r.id === id)
+  if (r) Object.assign(r, patch)
+  state.rows.sort((a, b) => dateOf(b).localeCompare(dateOf(a)))
+}
+
+export async function deleteExpense(id) {
+  const { error } = await sb.from('gastos').delete().eq('id', id)
+  if (error) throw error
+  state.rows = state.rows.filter(r => r.id !== id)
+}

@@ -1,8 +1,8 @@
-import { state, brl, todayISO, monthKey, monthLabel, shiftMonth, inMonth, sum,
+import { state, brl, esc, todayISO, monthKey, monthLabel, shiftMonth, inMonth, sum,
          monthToDay, byCategory, insights } from '../store.js'
 import { card, stat, chip, catRow, txRow, empty } from '../ui.js'
 import { ALLOWED } from '../supabase.js'
-import { esc } from '../store.js'
+import { installAvailable, promptInstall } from '../install.js'
 
 function paceChip() {
   const today = todayISO(), ym = monthKey(today), day = Number(today.slice(8, 10))
@@ -27,23 +27,36 @@ export function renderResumo(el) {
   const recent = state.rows.slice(0, 8)
 
   el.innerHTML = `
-    ${stat({
-      label: `Gastamos em ${monthLabel(ym)}`,
-      value: brl(total),
-      chip: paceChip(),
-      hint: projection ? `No ritmo atual: ~${brl(projection)} até o fim do mês` : '',
-    })}
+    <div class="l-grid">
+      <div class="l-span2">
+        ${stat({
+          label: `Gastamos em ${monthLabel(ym)}`,
+          value: brl(total),
+          chip: paceChip(),
+          hint: projection ? `No ritmo atual: ~${brl(projection)} até o fim do mês` : '',
+        })}
+      </div>
 
-    ${tips.length ? `<h2>O que está drenando</h2>` +
-      card(tips.map(t => `<div style="padding:8px 0;font-size:14px">${t}</div>`).join('')) : ''}
+      <section>
+        ${tips.length ? `<h2>O que está drenando</h2>` +
+          card(tips.map(t => `<div style="padding:8px 0;font-size:14px">${t}</div>`).join('')) : ''}
+        <h2>Para onde foi</h2>
+        ${card(cats.length
+          ? cats.map(([name, value]) => catRow({ name, value, max: maxCat })).join('')
+          : empty('🧾', `Nenhum gasto em ${monthLabel(ym, 'short')} ainda.<br>Envie um comprovante no grupo 💬 ou toque no +`))}
+      </section>
 
-    <h2>Para onde foi</h2>
-    ${card(cats.length
-      ? cats.map(([name, value]) => catRow({ name, value, max: maxCat })).join('')
-      : empty('🧾', `Nenhum gasto em ${monthLabel(ym, 'short')} ainda.<br>Envie um comprovante no grupo 💬 ou toque no +`))}
+      <section>
+        <h2>Últimos lançamentos</h2>
+        ${card(recent.length ? recent.map(txRow).join('') : empty('✨', 'Nada ainda.'))}
+      </section>
+    </div>
 
-    <h2>Últimos lançamentos</h2>
-    ${card(recent.length ? recent.map(txRow).join('') : empty('✨', 'Nada ainda.'))}
+    <p class="center">
+      ${installAvailable() ? `<button class="c-btn--link" id="install">📲 instalar no celular</button> · ` : ''}
+      <button class="c-btn--link" id="out">sair (${esc(ALLOWED[state.user.email] || '')})</button>
+    </p>`
 
-    <p class="center"><button class="c-btn--link" id="out">sair (${esc(ALLOWED[state.user.email] || '')})</button></p>`
+  const inst = el.querySelector('#install')
+  if (inst) inst.onclick = promptInstall
 }

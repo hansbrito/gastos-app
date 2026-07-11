@@ -1,63 +1,66 @@
 /* ============================================================
    Gastos Design System — tokens
-   Single source of truth for color, type, spacing, elevation.
-   Light theme by default; dark via prefers-color-scheme.
+   Modern indigo/violet on zinc neutrals. Light by default,
+   dark via prefers-color-scheme. Components use ONLY the
+   semantic aliases — raw scales never leave this file.
    ============================================================ */
 :root {
-  /* brand */
-  --brand-50:#f0fdfa; --brand-100:#ccfbf1; --brand-400:#2dd4bf;
-  --brand-600:#0f766e; --brand-700:#115e59;
+  /* brand scale */
+  --brand-300:#a5b4fc; --brand-400:#818cf8; --brand-500:#6366f1;
+  --brand-600:#4f46e5; --brand-900:#312e81;
+  --grad-primary:linear-gradient(135deg,#6366f1,#8b5cf6);
 
-  /* semantic aliases (use THESE in components, never raw scales) */
-  --color-bg:#f4f6f8;
+  /* semantic aliases */
+  --color-bg:#f7f7f8;
   --color-surface:#ffffff;
-  --color-surface-2:#eef1f5;        /* nested surfaces: bars, wells */
-  --color-text:#0f172a;
-  --color-text-muted:#64748b;
-  --color-border:#e2e8f0;
+  --color-surface-2:#f1f1f4;          /* wells, bars, hover */
+  --color-text:#18181b;
+  --color-text-muted:#71717a;
+  --color-border:#e4e4e7;
   --color-primary:var(--brand-600);
-  --color-primary-soft:var(--brand-100);
+  --color-primary-soft:#e0e7ff;
   --color-on-primary:#ffffff;
-  --color-positive:#059669;         /* money going DOWN = good */
-  --color-negative:#dc2626;         /* money going UP = bad   */
+  --color-positive:#059669;           /* spending went DOWN = good */
+  --color-negative:#e11d48;           /* spending went UP = bad    */
   --color-warning:#d97706;
-  --color-focus:#3b82f6;
+  --color-focus:var(--brand-500);
 
-  /* typography — perfect-fourth-ish scale, tabular numbers for money */
+  /* typography — tabular numbers for money via .num */
   --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
   --text-xs:12px; --text-sm:13px; --text-base:15px; --text-md:17px;
   --text-lg:22px; --text-xl:34px; --text-hero:40px;
   --leading:1.45;
 
-  /* spacing — 4px base grid */
+  /* spacing — 4px grid */
   --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px;
 
   /* shape & elevation */
-  --radius-sm:10px; --radius-md:16px; --radius-full:999px;
-  --shadow-1:0 1px 3px rgba(2,6,23,.06);
-  --shadow-2:0 8px 24px rgba(2,6,23,.14);
+  --radius-sm:12px; --radius-md:18px; --radius-full:999px;
+  --shadow-1:0 1px 3px rgba(24,24,27,.06);
+  --shadow-2:0 10px 30px rgba(24,24,27,.18);
 
   /* layout */
   --content-max:520px;
+  --content-max-wide:1080px;
   --nav-h:64px;
-  --touch-target:44px;              /* WCAG 2.5.8 minimum */
+  --touch-target:44px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg:#0b1220;
-    --color-surface:#141d2f;
-    --color-surface-2:#1d2940;
-    --color-text:#e2e8f0;
-    --color-text-muted:#8ea0b8;
-    --color-border:#243247;
+    --color-bg:#09090b;
+    --color-surface:#18181b;
+    --color-surface-2:#26262b;
+    --color-text:#f4f4f5;
+    --color-text-muted:#9f9fa8;
+    --color-border:#2a2a30;
     --color-primary:var(--brand-400);
-    --color-primary-soft:#134e4a;
-    --color-on-primary:#04302c;
+    --color-primary-soft:var(--brand-900);
+    --color-on-primary:#0e0d2e;
     --color-positive:#34d399;
-    --color-negative:#f87171;
+    --color-negative:#fb7185;
     --color-warning:#fbbf24;
     --shadow-1:none;
-    --shadow-2:0 8px 24px rgba(0,0,0,.5);
+    --shadow-2:0 10px 30px rgba(0,0,0,.55);
   }
 }

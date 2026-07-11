@@ -2,6 +2,20 @@
 // All dynamic text goes through esc() — no exceptions.
 import { esc, brl, CATS, dateOf } from './store.js'
 
+/* ---- Icon set (Lucide-style strokes, currentColor) ---- */
+const PATHS = {
+  home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  chart: '<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+  table: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M12 3v18"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  pencil: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+  install: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  google: '<circle cx="12" cy="12" r="10"/><path d="M17.13 12.2H12v2.5h2.92c-.4 1.4-1.54 2.3-2.92 2.3a3 3 0 0 1 0-6c.73 0 1.4.26 1.92.7l1.85-1.85A5.5 5.5 0 1 0 12 17.5c3.08 0 5.13-2.17 5.13-5.3z"/>',
+}
+export const icon = (name, size = 20) =>
+  `<span class="c-ic" aria-hidden="true"><svg width="${size}" height="${size}" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${PATHS[name]}</svg></span>`
+
 export const card = inner => `<div class="c-card">${inner}</div>`
 
 export const stat = ({ label, value, chip, hint }) => `
@@ -38,8 +52,8 @@ export const txRow = r => {
   </div>`
 }
 
-export const empty = (icon, text) => `
-  <div class="c-empty"><div class="c-empty__icon" aria-hidden="true">${icon}</div>${text}</div>`
+export const empty = (icon_, text) => `
+  <div class="c-empty"><div class="c-empty__icon" aria-hidden="true">${icon_}</div>${text}</div>`
 
 export const skeleton = () => `
   <div class="c-stat"><div class="c-skel" style="height:56px;max-width:240px;margin:0 auto"></div></div>
@@ -55,7 +69,7 @@ export function toast(msg) {
   setTimeout(() => t.remove(), 2600)
 }
 
-/** Bottom sheet. Returns the root; caller wires its inner controls. */
+/** Bottom sheet (mobile) / centered modal (desktop). */
 export function sheet(innerHTML) {
   const ov = document.createElement('div')
   ov.className = 'c-overlay'
@@ -65,11 +79,16 @@ export function sheet(innerHTML) {
   return ov
 }
 
+const TABS = [
+  ['resumo', 'home', 'Resumo'],
+  ['relatorios', 'chart', 'Relatórios'],
+  ['tabela', 'table', 'Tabela'],
+]
 export const nav = active => `
   <nav class="c-nav" aria-label="Navegação principal">
-    <button class="c-nav__item" data-t="resumo" ${active === 'resumo' ? 'aria-current="page"' : ''}>
-      <span class="ic" aria-hidden="true">🏠</span>Resumo</button>
-    <button class="c-nav__fab" id="nav-add" aria-label="Adicionar gasto">+</button>
-    <button class="c-nav__item" data-t="relatorios" ${active === 'relatorios' ? 'aria-current="page"' : ''}>
-      <span class="ic" aria-hidden="true">📊</span>Relatórios</button>
-  </nav>`
+    <span class="c-nav__brand"><img src="icon.svg" alt="">Gastos</span>
+    ${TABS.map(([t, ic, label]) => `
+      <button class="c-nav__item" data-t="${t}" ${active === t ? 'aria-current="page"' : ''}>
+        ${icon(ic, 20)}${label}</button>`).join('')}
+  </nav>
+  <button class="c-fab" id="nav-add" aria-label="Adicionar gasto">${icon('plus', 26)}</button>`

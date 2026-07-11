@@ -1,25 +1,29 @@
 // App shell: auth gate → tab routing. Views render into #app.
 import { sb, ALLOWED, signOut } from './supabase.js'
 import { state, loadRows, esc } from './store.js'
-import { nav, skeleton, toast } from './ui.js'
+import { nav, skeleton } from './ui.js'
 import { renderLogin, renderBlocked } from './views/login.js'
 import { renderResumo } from './views/resumo.js'
 import { renderRelatorios } from './views/relatorios.js'
-import { openAdd } from './views/add.js'
+import { renderTabela } from './views/tabela.js'
+import { openExpenseSheet } from './views/expense-sheet.js'
+import { registerSW } from './install.js'
 
 const $app = document.getElementById('app')
 let tab = 'resumo'
 let repRange = '3m'
+let tabelaYm = null
 
 function render() {
   $app.innerHTML = `<div id="view"></div>${nav(tab)}`
   const view = $app.querySelector('#view')
   if (tab === 'resumo') renderResumo(view)
-  else renderRelatorios(view, repRange, r => { repRange = r; render() })
+  else if (tab === 'relatorios') renderRelatorios(view, repRange, r => { repRange = r; render() })
+  else renderTabela(view, tabelaYm, ym => { tabelaYm = ym; render() }, render)
 
   for (const b of $app.querySelectorAll('.c-nav [data-t]'))
     b.onclick = () => { tab = b.dataset.t; render(); scrollTo(0, 0) }
-  $app.querySelector('#nav-add').onclick = () => openAdd(render)
+  $app.querySelector('#nav-add').onclick = () => openExpenseSheet({ onDone: render })
   const out = $app.querySelector('#out')
   if (out) out.onclick = () => signOut()
 }
@@ -44,6 +48,7 @@ function handleSession(session) {
   enter()
 }
 
+registerSW()
 const { data: { session } } = await sb.auth.getSession()
 handleSession(session)
 sb.auth.onAuthStateChange((_e, s) => handleSession(s))
