@@ -101,11 +101,13 @@ export function renderContas(el, onChanged) {
             const m = /^(.*?)\s*(\d+)\/(\d+)\s*$/.exec(c.descricao || '')
             if (!m) continue
             const key = m[1].trim().toLowerCase() + '|' + m[3]
-            grupos[key] = grupos[key] || { nome: m[1].trim(), total: Number(m[3]), valor: Number(c.valor || 0), pendentes: 0 }
+            grupos[key] = grupos[key] || { nome: m[1].trim(), total: Number(m[3]), valor: Number(c.valor || 0), pendentes: 0, n: 0 }
+            grupos[key].n++
             const pago = (c.pagos || []).includes(c.vencimento)
             if (!pago) grupos[key].pendentes++
           }
-          const parcelados = Object.values(grupos).filter(g => g.total > 1)
+          // only real groups: a lone "X 35/36" must not fabricate a 36-parcel progress
+          const parcelados = Object.values(grupos).filter(g => g.total > 1 && g.n >= 2)
           if (!finitas.length && !ativas.length && !parcelados.length)
             return card(empty('🏁', 'Contas parceladas e dívidas com prazo aparecem aqui com o progresso de quitação.'))
           const items = []
