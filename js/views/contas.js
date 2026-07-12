@@ -12,6 +12,15 @@ const REC_LABEL = { unica: 'única', semanal: 'semanal', quinzenal: 'quinzenal',
 
 /* ------------------------------------------------------ contas do mês -- */
 
+function parcelaInfo(o) {
+  const c = o.conta
+  if (c.recorrencia === 'unica') return ''
+  const idx = ocorrencias(c, c.vencimento, o.data).length
+  if (!c.fim) return ` · ${idx}ª parcela`
+  const total = ocorrencias(c, c.vencimento, c.fim).length
+  return ` · parcela ${idx}/${total}`
+}
+
 function occRow(o, i) {
   const st = o.pago ? ['paga ✓', 'positive'] : o.atrasada ? ['atrasada', 'negative'] : ['pendente', 'neutral']
   return `
@@ -19,7 +28,7 @@ function occRow(o, i) {
       <div class="c-tx__avatar" aria-hidden="true" style="${o.pago ? 'opacity:.45' : ''}">📄</div>
       <div class="c-tx__body" style="${o.pago ? 'opacity:.55' : ''}">
         <div class="c-tx__title">${esc(o.conta.descricao)}</div>
-        <div class="c-tx__meta">vence ${fmtBRDate(o.data)} · ${REC_LABEL[o.conta.recorrencia]}${o.conta.linha_digitavel ? ' · 📋 código' : ''}</div>
+        <div class="c-tx__meta">vence ${fmtBRDate(o.data)} · ${REC_LABEL[o.conta.recorrencia]}${parcelaInfo(o)}${o.conta.linha_digitavel ? ' · 📋 código' : ''}</div>
       </div>
       <span class="c-chip c-chip--${st[1]}" style="margin-right:8px">${st[0]}</span>
       <div class="c-tx__value num" style="${o.pago ? 'opacity:.55' : ''}">${o.conta.valor ? brl(Number(o.conta.valor)) : '—'}</div>
@@ -68,6 +77,47 @@ export function renderContas(el, onChanged) {
       </section>
 
       <section>
+        <h2>Progresso das parcelas</h2>
+        ${(() => {
+          const finitas = state.contas.filter(c => c.recorrencia !== 'unica' && c.fim)
+          if (!finitas.length && !ativas.length) return card(empty('🏁', 'Contas parceladas e dívidas com prazo aparecem aqui com o progresso de quitação.'))
+          const items = []
+          for (const c of finitas) {
+            const total = ocorrencias(c, c.vencimento, c.fim).length
+            const pagosN = (c.pagos || []).length
+            const pct = total ? pagosN / total * 100 : 0
+            const v = Number(c.valor || 0)
+            items.push(`
+              <div class="c-cat" style="--cat-color:${pct >= 100 ? 'var(--color-positive)' : 'var(--color-primary)'}">
+                <div class="c-cat__emoji" aria-hidden="true">${pct >= 100 ? '🎉' : '🏁'}</div>
+                <div class="c-cat__body">
+                  <div class="c-cat__line"><span>${esc(c.descricao)}</span><span class="num">${pagosN}/${total}</span></div>
+                  <div class="c-cat__bar"><i style="width:${Math.max(pct, 2).toFixed(0)}%"></i></div>
+                  <div class="muted small" style="margin-top:3px">
+                    ${v ? `já pagamos ${brl(pagosN * v)} de ${brl(total * v)} · ` : ''}${pct.toFixed(0)}% concluído${pct >= 100 ? ' 🎉' : ` · faltam ${total - pagosN}`}
+                  </div>
+                </div>
+              </div>`)
+          }
+          for (const d of ativas) {
+            const atual = parcelaAtual(d)
+            const pagas = atual - 1
+            const pct = pagas / d.parcelas_total * 100
+            items.push(`
+              <div class="c-cat" style="--cat-color:var(--color-warning)">
+                <div class="c-cat__emoji" aria-hidden="true">🏁</div>
+                <div class="c-cat__body">
+                  <div class="c-cat__line"><span>${esc(d.credor)}</span><span class="num">${pagas}/${d.parcelas_total}</span></div>
+                  <div class="c-cat__bar"><i style="width:${Math.max(pct, 2).toFixed(0)}%"></i></div>
+                  <div class="muted small" style="margin-top:3px">
+                    já pagamos ${brl(pagas * Number(d.valor_parcela))} de ${brl(d.parcelas_total * Number(d.valor_parcela))} · ${pct.toFixed(0)}% · faltam ${d.parcelas_total - pagas} parcelas
+                  </div>
+                </div>
+              </div>`)
+          }
+          return card(items.join(''))
+        })()}
+
         <h2>Próximos meses (projeção)</h2>
         ${card(projecao.some(p => p.total > 0)
           ? projecao.map(p => `

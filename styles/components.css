@@ -186,3 +186,16 @@
 /* ---- Theme toggle nav item ---- */
 .c-nav__item--theme { width:48px; color:var(--color-text-muted); }
 @media (min-width: 900px) { .c-nav__item--theme { width:auto; margin-left:auto; } }
+
+/* ---- Tabela: responsive columns + long-text safety ---- */
+.c-table .t-main { max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.c-table .t-md { display:none; }
+.c-table .t-md-inline { display:none; }
+.t-avatar { display:inline-flex; width:26px; height:26px; border-radius:var(--radius-full);
+            background:var(--color-surface-2); color:var(--color-text-muted);
+            align-items:center; justify-content:center; font-weight:700; font-size:var(--text-xs); }
+@media (min-width: 700px) {
+  .c-table .t-md { display:table-cell; }
+  .c-table .t-md-inline { display:inline; }
+  .c-table .t-main { max-width:320px; }
+}
