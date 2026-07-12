@@ -28,7 +28,7 @@ export const CAT_COLORS = {
   'Outros recebimentos':'#6ee7b7',
 }
 
-export const state = { rows: [], cartoes: [], dividas: [], user: null }
+export const state = { rows: [], cartoes: [], dividas: [], contas: [], user: null }
 
 /* ---- formatting ---- */
 export const brl = v => (v ?? 0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' })
@@ -129,16 +129,18 @@ export function insights() {
 /* ---- IO ---- */
 export async function loadRows() {
   const since = shiftMonth(monthKey(todayISO()), -12) + '-01'
-  const [g, c, d] = await Promise.all([
+  const [g, c, d, ct] = await Promise.all([
     sb.from('gastos').select('*').gte('data', since)
       .order('data', { ascending: false }).order('created_at', { ascending: false }),
     sb.from('cartoes').select('*').order('nome'),
     sb.from('dividas').select('*').order('credor'),
+    sb.from('contas').select('*').eq('ativo', true).order('vencimento'),
   ])
   if (g.error) throw g.error
   state.rows = g.data
   state.cartoes = c.data || []
   state.dividas = d.data || []
+  state.contas = ct.data || []
 }
 
 /* ---- cartões & dívidas ---- */
@@ -193,6 +195,63 @@ export function faturaAberta(card) {
     const match = rc === nome || rc.includes(nome) || nome.includes(rc)
     return match && dateOf(r) >= start && dateOf(r) <= end
   }))
+}
+
+/* ---- contas (bills) ---- */
+export async function saveConta(row) {
+  const { error } = await sb.from('contas').upsert(row)
+  if (error) throw error
+  const i = state.contas.findIndex(c => c.id === row.id)
+  if (i >= 0) state.contas[i] = { ...state.contas[i], ...row }
+  else state.contas.push(row)
+  state.contas.sort((a, b) => a.vencimento.localeCompare(b.vencimento))
+}
+export async function deleteConta(id) {
+  const { error } = await sb.from('contas').delete().eq('id', id)
+  if (error) throw error
+  state.contas = state.contas.filter(c => c.id !== id)
+}
+export async function togglePago(conta, occDate) {
+  const pagos = (conta.pagos || []).includes(occDate)
+    ? conta.pagos.filter(p => p !== occDate)
+    : [...(conta.pagos || []), occDate]
+  const { error } = await sb.from('contas').update({ pagos }).eq('id', conta.id)
+  if (error) throw error
+  conta.pagos = pagos
+}
+
+/** Expand occurrences of a conta within [from, to] ISO dates. */
+export function ocorrencias(c, from, to) {
+  const out = []
+  const stepDays = { semanal: 7, quinzenal: 14 }
+  const d = new Date(c.vencimento + 'T12:00:00')
+  const end = c.fim ? new Date(c.fim + 'T12:00:00') : null
+  const lim = new Date(to + 'T12:00:00')
+  for (let i = 0; i < 200 && d <= lim; i++) {
+    if (end && d > end) break
+    const iso = d.toLocaleDateString('sv-SE')
+    if (iso >= from && iso <= to) out.push(iso)
+    if (c.recorrencia === 'unica') break
+    if (stepDays[c.recorrencia]) d.setDate(d.getDate() + stepDays[c.recorrencia])
+    else if (c.recorrencia === 'mensal') d.setMonth(d.getMonth() + 1)
+    else if (c.recorrencia === 'semestral') d.setMonth(d.getMonth() + 6)
+    else if (c.recorrencia === 'anual') d.setFullYear(d.getFullYear() + 1)
+    else break
+  }
+  return out
+}
+
+/** All occurrences (flat) between dates with status. */
+export function contasOcorrencias(from, to) {
+  const today = todayISO()
+  const out = []
+  for (const c of state.contas) {
+    for (const occ of ocorrencias(c, from, to)) {
+      const pago = (c.pagos || []).includes(occ)
+      out.push({ conta: c, data: occ, pago, atrasada: !pago && occ < today })
+    }
+  }
+  return out.sort((a, b) => a.data.localeCompare(b.data))
 }
 
 export function parcelaAtual(dv, ym = monthKey(todayISO())) {
