@@ -199,3 +199,11 @@
   .c-table .t-md-inline { display:inline; }
   .c-table .t-main { max-width:320px; }
 }
+
+/* ---- Nested add action inside cards ---- */
+.c-add { display:flex; align-items:center; justify-content:center; gap:6px;
+         width:100%; min-height:var(--touch-target); margin-top:var(--s-3);
+         border:1.5px dashed var(--color-border); border-radius:var(--radius-sm);
+         color:var(--color-text-muted); font-weight:600; font-size:var(--text-sm);
+         transition:border-color .15s, color .15s; }
+.c-add:hover { border-color:var(--color-primary); color:var(--color-primary); }

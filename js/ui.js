@@ -13,6 +13,7 @@ const PATHS = {
   creditcard: '<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>',
   receipt: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/>',
   copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  refresh: '<path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/>',
   google: '<circle cx="12" cy="12" r="10"/><path d="M17.13 12.2H12v2.5h2.92c-.4 1.4-1.54 2.3-2.92 2.3a3 3 0 0 1 0-6c.73 0 1.4.26 1.92.7l1.85-1.85A5.5 5.5 0 1 0 12 17.5c3.08 0 5.13-2.17 5.13-5.3z"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
@@ -97,6 +98,7 @@ export const nav = active => `
     ${TABS.map(([t, ic, label]) => `
       <button class="c-nav__item" data-t="${t}" ${active === t ? 'aria-current="page"' : ''}>
         ${icon(ic, 20)}${label}</button>`).join('')}
+    <button class="c-nav__item c-nav__item--theme" id="nav-refresh" aria-label="Atualizar dados"></button>
     <button class="c-nav__item c-nav__item--theme" id="nav-theme" aria-label="Alternar tema"></button>
   </nav>
   <button class="c-fab" id="nav-add" aria-label="Adicionar gasto">${icon('plus', 26)}</button>`

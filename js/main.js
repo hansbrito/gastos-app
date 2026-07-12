@@ -1,7 +1,7 @@
 // App shell: auth gate → tab routing. Views render into #app.
 import { sb, ALLOWED, signOut } from './supabase.js'
 import { state, loadRows, esc } from './store.js'
-import { nav, skeleton } from './ui.js'
+import { nav, skeleton, toast } from './ui.js'
 import { renderLogin, renderBlocked } from './views/login.js'
 import { renderResumo } from './views/resumo.js'
 import { renderRelatorios } from './views/relatorios.js'
@@ -28,6 +28,13 @@ function render() {
   for (const b of $app.querySelectorAll('.c-nav [data-t]'))
     b.onclick = () => { tab = b.dataset.t; render(); scrollTo(0, 0) }
   $app.querySelector('#nav-add').onclick = () => openExpenseSheet({ onDone: render })
+  const refreshBtn = $app.querySelector('#nav-refresh')
+  refreshBtn.innerHTML = `${icon('refresh', 20)}Atualizar`
+  refreshBtn.onclick = async () => {
+    refreshBtn.style.opacity = '.5'
+    try { await loadRows(); render(); toast('✔ Dados atualizados') }
+    catch (e) { toast('Erro ao atualizar: ' + e.message); refreshBtn.style.opacity = '' }
+  }
   const themeBtn = $app.querySelector('#nav-theme')
   themeBtn.innerHTML = `${icon(ICONS[currentTheme()], 20)}${LABELS[currentTheme()]}`
   themeBtn.onclick = () => { cycleTheme(); render() } // re-render → charts pick up new palette

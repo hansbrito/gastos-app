@@ -35,7 +35,10 @@ function occRow(o, i) {
     </div>`
 }
 
+let proximasRef = []
+
 export function renderContas(el, onChanged) {
+  proximasRef = []
   const today = todayISO(), ym = monthKey(today)
   const doMes = contasOcorrencias(`${ym}-01`, `${ym}-31`)
   const pendentesMes = doMes.filter(o => !o.pago)
@@ -65,23 +68,62 @@ export function renderContas(el, onChanged) {
     <div style="height:10px"></div>
     <div class="l-grid">
       <section class="l-span2">
-        <h2 style="display:flex;justify-content:space-between;align-items:center">Contas de ${monthLabel(ym)}
-          <button class="c-btn--link" id="add-conta" style="margin:0">+ conta</button></h2>
-        ${card(doMes.length
+        <h2>Contas de ${monthLabel(ym)}</h2>
+        ${card((doMes.length
           ? doMes.map(occRow).join('') + `
             <div style="display:flex;justify-content:space-between;border-top:1px solid var(--color-border);padding-top:10px;margin-top:4px" class="small">
               <span class="muted">${pendentesMes.length} pendente${pendentesMes.length !== 1 ? 's' : ''}</span>
               <b class="num">falta pagar ${brl(pendentesMes.reduce((s, o) => s + Number(o.conta.valor || 0), 0))}</b>
             </div>`
-          : empty('📄', 'Nenhuma conta este mês.<br>Mande um <b>boleto</b> no grupo (salva com código de barras) ou adicione uma conta recorrente aqui.'))}
+          : empty('📄', 'Nenhuma conta este mês.<br>Mande um <b>boleto</b> no grupo (salva com código de barras) ou agende uma conta.'))
+          + `<button class="c-add" id="add-conta">＋ nova conta</button>`)}
+
+        ${(() => {
+          const proxFrom = shiftMonth(ym, 1) + '-01'
+          const proxTo = shiftMonth(ym, 3) + '-31'
+          const prox = contasOcorrencias(proxFrom, proxTo).filter(o => !o.pago)
+          if (!prox.length) return ''
+          const shown = prox.slice(0, 12)
+          proximasRef = shown
+          return `<h2>Próximas contas</h2>` + card(
+            shown.map((o, i) => occRow(o, 'p' + i)).join('') +
+            (prox.length > shown.length ? `<p class="muted small" style="margin-top:8px">… e mais ${prox.length - shown.length} nos próximos meses.</p>` : ''))
+        })()}
       </section>
 
       <section>
         <h2>Progresso das parcelas</h2>
         ${(() => {
           const finitas = state.contas.filter(c => c.recorrencia !== 'unica' && c.fim)
-          if (!finitas.length && !ativas.length) return card(empty('🏁', 'Contas parceladas e dívidas com prazo aparecem aqui com o progresso de quitação.'))
+          // group contas únicas whose name ends with "N/M" (e.g. carnê/financiamento parcels)
+          const grupos = {}
+          for (const c of state.contas.filter(c => c.recorrencia === 'unica')) {
+            const m = /^(.*?)\s*(\d+)\/(\d+)\s*$/.exec(c.descricao || '')
+            if (!m) continue
+            const key = m[1].trim().toLowerCase() + '|' + m[3]
+            grupos[key] = grupos[key] || { nome: m[1].trim(), total: Number(m[3]), valor: Number(c.valor || 0), pendentes: 0 }
+            const pago = (c.pagos || []).includes(c.vencimento)
+            if (!pago) grupos[key].pendentes++
+          }
+          const parcelados = Object.values(grupos).filter(g => g.total > 1)
+          if (!finitas.length && !ativas.length && !parcelados.length)
+            return card(empty('🏁', 'Contas parceladas e dívidas com prazo aparecem aqui com o progresso de quitação.'))
           const items = []
+          for (const g of parcelados) {
+            const done = Math.max(g.total - g.pendentes, 0)
+            const pct = done / g.total * 100
+            items.push(`
+              <div class="c-cat" style="--cat-color:${pct >= 100 ? 'var(--color-positive)' : 'var(--color-primary)'}">
+                <div class="c-cat__emoji" aria-hidden="true">${pct >= 100 ? '🎉' : '🏁'}</div>
+                <div class="c-cat__body">
+                  <div class="c-cat__line"><span>${esc(g.nome)}</span><span class="num">${done}/${g.total}</span></div>
+                  <div class="c-cat__bar"><i style="width:${Math.max(pct, 2).toFixed(0)}%"></i></div>
+                  <div class="muted small" style="margin-top:3px">
+                    ${g.valor ? `já pagamos ${brl(done * g.valor)} de ${brl(g.total * g.valor)} · ` : ''}${pct.toFixed(0)}%${pct >= 100 ? ' 🎉' : ` · faltam ${g.total - done} parcelas`}
+                  </div>
+                </div>
+              </div>`)
+          }
           for (const c of finitas) {
             const total = ocorrencias(c, c.vencimento, c.fim).length
             const pagosN = (c.pagos || []).length
@@ -131,14 +173,14 @@ export function renderContas(el, onChanged) {
       </section>
 
       <section>
-        <h2 style="display:flex;justify-content:space-between;align-items:center">Cartões de crédito
-          <button class="c-btn--link" id="add-card" style="margin:0">+ cartão</button></h2>
-        ${card(state.cartoes.length ? state.cartoes.map(cartaoCard).join('')
-          : empty('💳', 'Nenhum cartão. Registre aqui ou no grupo:<br><i>"cartão: Nubank, limite 8000, fecha dia 28, vence dia 5"</i>'))}
-        <h2 style="display:flex;justify-content:space-between;align-items:center">Dívidas e parcelamentos
-          <button class="c-btn--link" id="add-divida" style="margin:0">+ dívida</button></h2>
-        ${card(ativas.length ? ativas.map(dividaCard).join('')
-          : empty('🧾', 'Nenhuma dívida ativa.'))}
+        <h2>Cartões de crédito</h2>
+        ${card((state.cartoes.length ? state.cartoes.map(cartaoCard).join('')
+          : empty('💳', 'Nenhum cartão ainda.'))
+          + `<button class="c-add" id="add-card">＋ novo cartão</button>`)}
+        <h2>Dívidas e parcelamentos</h2>
+        ${card((ativas.length ? ativas.map(dividaCard).join('')
+          : empty('🧾', 'Nenhuma dívida ativa.'))
+          + `<button class="c-add" id="add-divida">＋ nova dívida</button>`)}
       </section>
     </div>`
 
@@ -146,7 +188,11 @@ export function renderContas(el, onChanged) {
   el.querySelector('#add-card').onclick = () => openCartaoSheet(null, onChanged)
   el.querySelector('#add-divida').onclick = () => openDividaSheet(null, onChanged)
   for (const n of el.querySelectorAll('[data-occ]'))
-    n.onclick = () => openOccSheet(doMes[Number(n.dataset.occ)], onChanged)
+    n.onclick = () => {
+      const k = n.dataset.occ
+      const o = String(k).startsWith('p') ? proximasRef[Number(k.slice(1))] : doMes[Number(k)]
+      if (o) openOccSheet(o, onChanged)
+    }
   for (const n of el.querySelectorAll('[data-card]'))
     n.onclick = () => openCartaoSheet(state.cartoes.find(c => c.id === n.dataset.card), onChanged)
   for (const n of el.querySelectorAll('[data-divida]'))
