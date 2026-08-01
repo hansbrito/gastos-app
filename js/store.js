@@ -7,15 +7,20 @@ export const CATS = {
   'Alimentação':'🍔', 'Mercado':'🛒', 'Transporte':'🚗', 'Moradia':'🏠', 'Saúde':'💊',
   'Educação':'📚', 'Lazer':'🎉', 'Assinaturas':'📺', 'Vestuário':'👕',
   'Seguros':'🛡️', 'Serviços':'🧰', 'Financeiro':'🏦', 'Beleza':'💈', 'Outros':'📦',
+  'Transferências':'🔄',
   // receitas
   'Salário':'💼', 'Freela':'💻', 'Reembolso':'↩️', 'Investimentos':'📈', 'Outros recebimentos':'💰',
 }
 export const INCOME_CATS = ['Salário', 'Freela', 'Reembolso', 'Investimentos', 'Outros recebimentos']
 export const EXPENSE_CATS = ['Alimentação', 'Mercado', 'Transporte', 'Moradia', 'Saúde',
   'Educação', 'Lazer', 'Assinaturas', 'Vestuário', 'Seguros', 'Serviços', 'Financeiro', 'Beleza', 'Outros']
+// Neither spend nor income — e.g. paying a credit-card bill (the card purchases
+// are the real expense). Excluded from every total so it never double-counts.
+export const NEUTRAL_CATS = ['Transferências']
 
-export const isIncome = r => (r.tipo || 'despesa') === 'receita'
-export const isExpenseRec = r => !isIncome(r)
+export const isNeutral = r => NEUTRAL_CATS.includes(r.categoria)
+export const isIncome = r => (r.tipo || 'despesa') === 'receita' && !isNeutral(r)
+export const isExpenseRec = r => !isNeutral(r) && (r.tipo || 'despesa') !== 'receita'
 /** Distinct card names already used — feeds the cartão datalist. */
 export const knownCards = () =>
   [...new Set([...state.cartoes.map(c => c.nome), ...state.rows.map(r => r.cartao).filter(Boolean)])].sort()
@@ -25,7 +30,7 @@ export const CAT_COLORS = {
   'Alimentação':'#f59e0b', 'Mercado':'#22c55e', 'Transporte':'#3b82f6', 'Moradia':'#a78bfa',
   'Saúde':'#f43f5e', 'Educação':'#eab308', 'Lazer':'#ec4899', 'Assinaturas':'#06b6d4',
   'Vestuário':'#8b5cf6', 'Seguros':'#14b8a6', 'Serviços':'#f97316', 'Financeiro':'#64748b',
-  'Beleza':'#d946ef', 'Outros':'#9ca3af',
+  'Beleza':'#d946ef', 'Outros':'#9ca3af', 'Transferências':'#94a3b8',
   'Salário':'#10b981', 'Freela':'#34d399', 'Reembolso':'#2dd4bf', 'Investimentos':'#4ade80',
   'Outros recebimentos':'#6ee7b7',
 }
@@ -43,6 +48,9 @@ export const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<
 export const todayISO = () => new Date().toLocaleDateString('sv-SE', { timeZone:'America/Sao_Paulo' })
 export const monthKey = d => (d || '').slice(0, 7)
 export const dateOf = r => r.data || (r.received_at || '').slice(0, 10)
+/** Reference month a record belongs to: its competência if set (e.g. rent paid
+ *  early still counts in its own month), else the payment month. */
+export const refMonth = r => r.competencia || monthKey(dateOf(r))
 export const monthLabel = (ym, style = 'long') => new Date(ym + '-15T12:00:00')
   .toLocaleDateString('pt-BR', { month: style, ...(style === 'long' ? { year:'numeric' } : {}) })
 export const shiftMonth = (ym, n) => {
@@ -57,7 +65,7 @@ export const fmtBRDate = iso => {
 
 /* ---- aggregation ---- */
 export const sum = a => a.reduce((s, r) => s + Number(r.valor || 0), 0)
-export const inMonth = ym => state.rows.filter(r => monthKey(dateOf(r)) === ym)
+export const inMonth = ym => state.rows.filter(r => refMonth(r) === ym)
 export const expensesIn = ym => inMonth(ym).filter(isExpenseRec)
 export const incomesIn = ym => inMonth(ym).filter(isIncome)
 

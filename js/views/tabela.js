@@ -1,8 +1,8 @@
 // Tabela: the month's realized entries + its projected bills (contas/parcelas
 // still to fall due), mixed in one list. Tap a row to correct it (realized) or
 // adjust the underlying conta/dívida (projected). Sortable + filterable.
-import { state, brl, esc, todayISO, monthKey, monthLabel, inMonth, sum, dateOf, CATS,
-         isIncome, isExpenseRec, contasOcorrencias, dividaVenceEm } from '../store.js'
+import { state, brl, esc, todayISO, monthKey, monthLabel, inMonth, sum, dateOf, refMonth, CATS,
+         isIncome, isExpenseRec, isNeutral, contasOcorrencias, dividaVenceEm } from '../store.js'
 import { card, empty } from '../ui.js'
 import { openExpenseSheet } from './expense-sheet.js'
 import { openContaSheet, openDividaSheet } from './contas.js'
@@ -27,7 +27,7 @@ const sortVal = (it, key) => key === 'valor' ? it.valor : String(it[key] || '').
 function monthItems(ym) {
   const items = []
   for (const r of inMonth(ym)) items.push({
-    kind: 'real', ref: r, previsto: false,
+    kind: 'real', ref: r, previsto: false, neutral: isNeutral(r),
     data: dateOf(r), onde: r.estabelecimento || r.descricao || '—',
     categoria: r.categoria || '', catLabel: `${CATS[r.categoria] || ''} ${esc(r.categoria || '—')}`,
     cartao: r.cartao || '', metodo: r.metodo || '', sender: r.sender || '',
@@ -60,7 +60,7 @@ function monthItems(ym) {
     items.push({
       kind: 'divida', ref: d, previsto: true,
       data: `${ym}-${String(d.dia_vencimento).padStart(2, '0')}`,
-      onde: d.credor, categoria: '', catLabel: '🏁 parcela de dívida',
+      onde: d.credor, categoria: '', catLabel: '📆 parcela de dívida',
       cartao: '', metodo: '', sender: '', valor: v, tipo: 'despesa',
     })
   }
@@ -70,7 +70,7 @@ function monthItems(ym) {
 export function renderTabela(el, selectedYm, onMonth, onChanged) {
   const curYm = monthKey(todayISO())
   const ym = selectedYm || curYm
-  const months = [...new Set([curYm, ...state.rows.map(r => monthKey(dateOf(r)))])]
+  const months = [...new Set([curYm, ...state.rows.map(refMonth)])]
     .filter(Boolean).sort().reverse()
   const all = monthItems(ym)
 
@@ -143,8 +143,8 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
 
   function paint() {
     const rows = apply()
-    const realOut = sum(rows.filter(it => !it.previsto && it.tipo !== 'receita').map(it => ({ valor: it.valor })))
-    const realIn = sum(rows.filter(it => !it.previsto && it.tipo === 'receita').map(it => ({ valor: it.valor })))
+    const realOut = sum(rows.filter(it => !it.previsto && !it.neutral && it.tipo !== 'receita').map(it => ({ valor: it.valor })))
+    const realIn = sum(rows.filter(it => !it.previsto && !it.neutral && it.tipo === 'receita').map(it => ({ valor: it.valor })))
     const prev = sum(rows.filter(it => it.previsto).map(it => ({ valor: it.valor })))
     const arrow = k => sortKey === k ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
     const head = COLS.map(c =>
@@ -163,7 +163,7 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
               const isInc = it.tipo === 'receita'
               return `<tr data-i="${i}" class="${it.previsto ? 't-previsto' : ''}" title="${it.previsto ? 'Tocar para ajustar' : 'Tocar para corrigir'}">
                 <td class="t-muted num">${d.slice(8, 10)}/${d.slice(5, 7)}</td>
-                <td class="t-main">${esc(it.onde)}${it.previsto ? ' <span class="c-chip c-chip--neutral t-tag">previsto</span>' : ''}</td>
+                <td class="t-main">${esc(it.onde)}${it.previsto ? ' <span class="c-chip c-chip--neutral t-tag">previsto</span>' : it.neutral ? ' <span class="c-chip c-chip--neutral t-tag">transferência</span>' : ''}</td>
                 <td class="t-cat"><span class="t-md-inline">${it.catLabel}</span></td>
                 <td class="t-md t-muted">${esc(it.cartao || '—')}</td>
                 <td class="t-md t-muted">${esc(it.metodo || '—')}</td>

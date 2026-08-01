@@ -89,11 +89,12 @@
 
 /* Tabela controls: month + per-column filters — fill the width, light up when active */
 .t-controls { margin-bottom:var(--s-4); }
-.t-filters { display:flex; flex-wrap:wrap; gap:var(--s-3); align-items:end; }
-.t-filter { flex:1 1 150px; display:flex; flex-direction:column; gap:6px;
+.t-filters { display:grid; grid-template-columns:1fr 1fr; gap:var(--s-3); align-items:end; }
+@media (min-width:720px) { .t-filters { grid-template-columns:repeat(4, 1fr); } }
+.t-filter { min-width:0; display:flex; flex-direction:column; gap:6px;
   font-size:var(--text-xs); font-weight:600; color:var(--color-text-muted);
   text-transform:uppercase; letter-spacing:.5px; }
-.t-filter--grow { flex-basis:240px; }
+.t-filter--grow { grid-column:span 2; }
 .t-filter select, .t-filter input {
   width:100%; font-family:inherit; font-size:var(--text-base); font-weight:500;
   text-transform:none; letter-spacing:0; color:var(--color-text);

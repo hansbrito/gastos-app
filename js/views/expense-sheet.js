@@ -27,8 +27,11 @@ export function openExpenseSheet({ rec = null, onDone }) {
         value="${isEdit ? esc(rec.estabelecimento || '') : ''}"></div>
     <div class="c-field"><label>Categoria</label>
       <div class="c-chips" id="f-cats">${chipsFor(tipo)}</div></div>
-    <div class="c-field"><label for="f-data">Data</label>
+    <div class="c-field"><label for="f-data">Data do pagamento</label>
       <input id="f-data" type="date" value="${isEdit ? dateOf(rec) : todayISO()}"></div>
+    <div class="c-field"><label for="f-comp">Mês de referência (opcional)</label>
+      <input id="f-comp" type="month" value="${isEdit && rec.competencia ? rec.competencia : ''}">
+      <p class="muted small" style="margin:4px 0 0">Vazio = mês do pagamento. Use quando pagar adiantado (ex.: aluguel de agosto pago no fim de julho).</p></div>
     <div class="c-field" id="w-metodo"><label for="f-metodo">Método</label>
       <select id="f-metodo">${['Pix', 'crédito', 'débito', 'dinheiro', 'boleto', 'outro'].map(m =>
         `<option ${isEdit && rec.metodo === m ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
@@ -90,7 +93,9 @@ export function openExpenseSheet({ rec = null, onDone }) {
     if (!cat) return toast('Escolha uma categoria')
     e.target.disabled = true; e.target.textContent = 'Salvando…'
     const metodo = ov.querySelector('#f-metodo').value
-    const fields = { tipo, valor, estabelecimento: estab, categoria: cat, data, metodo, cartao }
+    const comp = ov.querySelector('#f-comp').value || null
+    const fields = { tipo, valor, estabelecimento: estab, categoria: cat, data, metodo, cartao,
+      competencia: comp && comp !== data.slice(0, 7) ? comp : null }
     try {
       if (isEdit) {
         await updateExpense(rec.id, fields)

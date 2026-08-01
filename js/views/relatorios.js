@@ -1,5 +1,5 @@
 import { state, brl, todayISO, monthKey, monthLabel, shiftMonth, inMonth, sum,
-         expensesIn, incomesIn, isExpenseRec, byCategory, monthDeltas, dateOf } from '../store.js'
+         expensesIn, incomesIn, isExpenseRec, byCategory, monthDeltas, refMonth } from '../store.js'
 import { card, catRow, empty } from '../ui.js'
 import { monthlyBars, waterfall, flowWaterfall } from '../charts.js'
 
@@ -7,12 +7,12 @@ export function renderRelatorios(el, repRange, onRange) {
   const ym = monthKey(todayISO())
   const n = repRange === '3m' ? 4 : 12
   const months = Array.from({ length: n }, (_, i) => shiftMonth(ym, -(n - 1 - i)))
-  const period = state.rows.filter(r => monthKey(dateOf(r)) >= months[0] && isExpenseRec(r))
+  const period = state.rows.filter(r => refMonth(r) >= months[0] && isExpenseRec(r))
   const incomesNow = byCategory(incomesIn(ym)).map(([cat, val]) => ({ cat, val }))
   const expensesNow = byCategory(expensesIn(ym)).map(([cat, val]) => ({ cat, val }))
   const saldoNow = incomesNow.reduce((a, i) => a + i.val, 0) - expensesNow.reduce((a, e) => a + e.val, 0)
   const totalPeriod = sum(period)
-  const monthsWithData = new Set(period.map(r => monthKey(dateOf(r)))).size || 1
+  const monthsWithData = new Set(period.map(refMonth)).size || 1
   const cats = byCategory(period)
   const maxCat = cats[0]?.[1] || 1
   const wf = monthDeltas()
