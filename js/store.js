@@ -140,7 +140,28 @@ export async function loadRows() {
   state.rows = g.data
   state.cartoes = c.data || []
   state.dividas = d.data || []
-  state.contas = ct.data || []
+  state.contas = dedupeContas(ct.data || [])
+}
+
+/**
+ * Same boleto entered twice (different creation paths → different ids, same
+ * barcode) shows up as a duplicate. Collapse contas that share a barcode +
+ * vencimento into one, merging their paid marks so paid status survives.
+ * Contas without a barcode (recurring bills like aluguel) are never merged.
+ */
+export function dedupeContas(contas) {
+  const byKey = new Map()
+  const out = []
+  for (const c of contas) {
+    const barcode = (c.linha_digitavel || '').replace(/\D/g, '')
+    if (!barcode) { out.push(c); continue }
+    const key = barcode + '|' + c.vencimento
+    const prev = byKey.get(key)
+    if (!prev) { byKey.set(key, c); out.push(c); continue }
+    // merge paid marks into the kept row (union)
+    prev.pagos = [...new Set([...(prev.pagos || []), ...(c.pagos || [])])]
+  }
+  return out
 }
 
 /* ---- cartões & dívidas ---- */
@@ -254,10 +275,27 @@ export function contasOcorrencias(from, to) {
   return out.sort((a, b) => a.data.localeCompare(b.data))
 }
 
+// How many months between one installment and the next. Debts default to
+// monthly; annual (school, insurance) and semiannual also occur.
+export const PERIODO_MESES = { mensal: 1, bimestral: 2, trimestral: 3, semestral: 6, anual: 12 }
+export const PERIODO_LABEL = { mensal: 'mês', bimestral: 'bimestre', trimestral: 'trimestre', semestral: 'semestre', anual: 'ano' }
+const stepMeses = dv => PERIODO_MESES[dv.periodo] || 1
+
 export function parcelaAtual(dv, ym = monthKey(todayISO())) {
   const [y1, m1] = dv.inicio_ym.split('-').map(Number)
   const [y2, m2] = ym.split('-').map(Number)
-  return Math.min(Math.max((y2 - y1) * 12 + (m2 - m1) + 1, 1), dv.parcelas_total)
+  const elapsed = (y2 - y1) * 12 + (m2 - m1)
+  return Math.min(Math.max(Math.floor(elapsed / stepMeses(dv)) + 1, 1), dv.parcelas_total)
+}
+
+/** True when a parcela of `dv` actually falls in month `ym` (respects período). */
+export function dividaVenceEm(dv, ym) {
+  const [y1, m1] = dv.inicio_ym.split('-').map(Number)
+  const [y2, m2] = ym.split('-').map(Number)
+  const elapsed = (y2 - y1) * 12 + (m2 - m1)
+  if (elapsed < 0 || elapsed % stepMeses(dv) !== 0) return false
+  const parcela = elapsed / stepMeses(dv) + 1
+  return parcela >= 1 && parcela <= dv.parcelas_total
 }
 
 export async function addExpense(rec) {

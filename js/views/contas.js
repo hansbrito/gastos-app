@@ -2,7 +2,7 @@
 // and paid tracking), future projection, credit cards, and debts.
 import { state, brl, esc, todayISO, monthKey, monthLabel, shiftMonth, fmtBRDate,
          contasOcorrencias, ocorrencias, saveConta, deleteConta, togglePago,
-         faturaWindow, faturaAberta, parcelaAtual,
+         faturaWindow, faturaAberta, parcelaAtual, dividaVenceEm, PERIODO_LABEL,
          saveCartao, deleteCartao, saveDivida, deleteDivida } from '../store.js'
 import { card, empty, sheet, toast, icon } from '../ui.js'
 
@@ -50,14 +50,7 @@ export function renderContas(el, onChanged) {
     const occs = contasOcorrencias(`${m}-01`, `${m}-31`)
     const contasTotal = occs.reduce((s, o) => s + Number(o.conta.valor || 0), 0)
     const divTotal = state.dividas
-      .filter(d => d.ativo && parcelaAtual(d, m) <= d.parcelas_total &&
-        (m >= d.inicio_ym) && (parcelaAtual(d, m) < d.parcelas_total || parcelaAtual(d, m) === d.parcelas_total))
-      .filter(d => {
-        const [y1, mo1] = d.inicio_ym.split('-').map(Number)
-        const [y2, mo2] = m.split('-').map(Number)
-        const idx = (y2 - y1) * 12 + (mo2 - mo1) + 1
-        return idx >= 1 && idx <= d.parcelas_total
-      })
+      .filter(d => d.ativo && dividaVenceEm(d, m))
       .reduce((s, d) => s + Number(d.valor_parcela), 0)
     projecao.push({ m, contas: contasTotal, dividas: divTotal, total: contasTotal + divTotal, n: occs.length })
   }
@@ -106,8 +99,14 @@ export function renderContas(el, onChanged) {
             const pago = (c.pagos || []).includes(c.vencimento)
             if (!pago) grupos[key].pendentes++
           }
+          // A dívida is the single source of truth for an installment debt: if a
+          // conta-group matches one (same nº of parcelas + same value), don't
+          // also fabricate a parallel progress bar from the boletos.
+          const matchesDivida = g => state.dividas.some(d =>
+            d.parcelas_total === g.total &&
+            Math.abs(Number(d.valor_parcela) - g.valor) <= Math.max(g.valor * 0.01, 0.5))
           // only real groups: a lone "X 35/36" must not fabricate a 36-parcel progress
-          const parcelados = Object.values(grupos).filter(g => g.total > 1 && g.n >= 2)
+          const parcelados = Object.values(grupos).filter(g => g.total > 1 && g.n >= 2 && !matchesDivida(g))
           if (!finitas.length && !ativas.length && !parcelados.length)
             return card(empty('🏁', 'Contas parceladas e dívidas com prazo aparecem aqui com o progresso de quitação.'))
           const items = []
@@ -337,7 +336,7 @@ function dividaCard(d) {
     <div class="c-cat" data-divida="${esc(d.id)}" style="--cat-color:var(--color-warning);cursor:pointer" title="Tocar para editar">
       <div class="c-cat__emoji" aria-hidden="true">📄</div>
       <div class="c-cat__body">
-        <div class="c-cat__line"><span>${esc(d.credor)}</span><span class="num">${brl(d.valor_parcela)}/mês</span></div>
+        <div class="c-cat__line"><span>${esc(d.credor)}</span><span class="num">${brl(d.valor_parcela)}/${PERIODO_LABEL[d.periodo] || 'mês'}</span></div>
         <div class="c-cat__bar"><i style="width:${Math.max(pct, 2).toFixed(0)}%"></i></div>
         <div class="muted small" style="margin-top:3px">
           parcela ${atual}/${d.parcelas_total} · vence dia ${d.dia_vencimento} · faltam ${brl(restam * d.valor_parcela)}${d.descricao ? ` · ${esc(d.descricao)}` : ''}
@@ -392,12 +391,16 @@ function openCartaoSheet(c, onDone) {
 
 function openDividaSheet(d, onDone) {
   const isEdit = !!d
+  let periodo = isEdit ? (d.periodo || 'mensal') : 'mensal'
   const ov = sheet(`
     <h1>${isEdit ? 'Editar dívida' : 'Nova dívida'}</h1>
     <div class="c-field"><label>Credor</label><input id="d-credor" type="text" placeholder="ex.: Financiamento carro" value="${isEdit ? esc(d.credor) : ''}"></div>
     <div class="c-field"><label>Descrição (opcional)</label><input id="d-desc" type="text" value="${isEdit ? esc(d.descricao || '') : ''}"></div>
     <div class="c-field"><label>Valor da parcela (R$)</label><input id="d-valor" type="number" inputmode="decimal" min="0.01" step="0.01" value="${isEdit ? Number(d.valor_parcela) : ''}"></div>
     <div class="c-field"><label>Total de parcelas</label><input id="d-total" type="number" inputmode="numeric" min="1" value="${isEdit ? d.parcelas_total : ''}"></div>
+    <div class="c-field"><label>A cada</label>
+      <div class="c-chips" id="d-periodo">${Object.entries(PERIODO_LABEL).map(([k, l]) =>
+        `<button data-p="${k}" aria-pressed="${periodo === k}">${l}</button>`).join('')}</div></div>
     <div class="c-field"><label>Primeira parcela (mês)</label><input id="d-inicio" type="month" value="${isEdit ? d.inicio_ym : monthKey(todayISO())}"></div>
     <div class="c-field"><label>Dia de vencimento</label><input id="d-vence" type="number" inputmode="numeric" min="1" max="31" value="${isEdit ? d.dia_vencimento : ''}"></div>
     <button class="c-btn c-btn--primary" id="d-save">Salvar</button>
@@ -405,6 +408,11 @@ function openDividaSheet(d, onDone) {
                 <button class="c-btn c-btn--danger" id="d-del" style="margin-top:8px">Excluir</button>` : ''}
     <p class="center" style="padding-bottom:0"><button class="c-btn--link" id="d-cancel">cancelar</button></p>`)
   ov.querySelector('#d-cancel').onclick = () => ov.remove()
+  for (const b of ov.querySelectorAll('#d-periodo button'))
+    b.onclick = () => {
+      periodo = b.dataset.p
+      ov.querySelectorAll('#d-periodo button').forEach(x => x.setAttribute('aria-pressed', String(x === b)))
+    }
   twoStepDelete(ov.querySelector('#d-del'), async () => {
     await deleteDivida(d.id); ov.remove(); toast('Dívida excluída'); onDone()
   })
@@ -431,7 +439,7 @@ function openDividaSheet(d, onDone) {
         id: isEdit ? d.id : `${slug(credor)}-${inicio}`,
         credor, descricao: ov.querySelector('#d-desc').value.trim() || null,
         valor_parcela: valor, parcelas_total: total, inicio_ym: inicio,
-        dia_vencimento: vence, ativo: isEdit ? d.ativo : true,
+        dia_vencimento: vence, periodo, ativo: isEdit ? d.ativo : true,
       })
       ov.remove(); toast('✔ Dívida salva'); onDone()
     } catch (err) { toast('Erro: ' + err.message); e.target.disabled = false }
