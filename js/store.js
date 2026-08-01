@@ -5,13 +5,14 @@ import { sb } from './supabase.js'
 
 export const CATS = {
   'Alimentação':'🍔', 'Mercado':'🛒', 'Transporte':'🚗', 'Moradia':'🏠', 'Saúde':'💊',
-  'Educação':'📚', 'Lazer':'🎉', 'Assinaturas':'📺', 'Vestuário':'👕', 'Outros':'📦',
+  'Educação':'📚', 'Lazer':'🎉', 'Assinaturas':'📺', 'Vestuário':'👕',
+  'Seguros':'🛡️', 'Serviços':'🧰', 'Financeiro':'🏦', 'Beleza':'💈', 'Outros':'📦',
   // receitas
   'Salário':'💼', 'Freela':'💻', 'Reembolso':'↩️', 'Investimentos':'📈', 'Outros recebimentos':'💰',
 }
 export const INCOME_CATS = ['Salário', 'Freela', 'Reembolso', 'Investimentos', 'Outros recebimentos']
 export const EXPENSE_CATS = ['Alimentação', 'Mercado', 'Transporte', 'Moradia', 'Saúde',
-  'Educação', 'Lazer', 'Assinaturas', 'Vestuário', 'Outros']
+  'Educação', 'Lazer', 'Assinaturas', 'Vestuário', 'Seguros', 'Serviços', 'Financeiro', 'Beleza', 'Outros']
 
 export const isIncome = r => (r.tipo || 'despesa') === 'receita'
 export const isExpenseRec = r => !isIncome(r)
@@ -23,7 +24,8 @@ export const knownCards = () =>
 export const CAT_COLORS = {
   'Alimentação':'#f59e0b', 'Mercado':'#22c55e', 'Transporte':'#3b82f6', 'Moradia':'#a78bfa',
   'Saúde':'#f43f5e', 'Educação':'#eab308', 'Lazer':'#ec4899', 'Assinaturas':'#06b6d4',
-  'Vestuário':'#8b5cf6', 'Outros':'#9ca3af',
+  'Vestuário':'#8b5cf6', 'Seguros':'#14b8a6', 'Serviços':'#f97316', 'Financeiro':'#64748b',
+  'Beleza':'#d946ef', 'Outros':'#9ca3af',
   'Salário':'#10b981', 'Freela':'#34d399', 'Reembolso':'#2dd4bf', 'Investimentos':'#4ade80',
   'Outros recebimentos':'#6ee7b7',
 }
