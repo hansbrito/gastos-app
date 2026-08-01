@@ -85,29 +85,45 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
   el.innerHTML = `
     <div style="height:10px"></div>
     <div class="t-controls">
-      <label class="t-filter">Mês
-        <select id="t-month">${months.map(m =>
-          `<option value="${m}" ${m === ym ? 'selected' : ''}>${monthLabel(m)}${m === curYm ? ' (atual)' : ''}</option>`).join('')}</select>
-      </label>
-      <label class="t-filter">Ver
-        <select id="t-ver">
-          <option value="" ${filters.ver === '' ? 'selected' : ''}>tudo</option>
-          <option value="real" ${filters.ver === 'real' ? 'selected' : ''}>só realizado</option>
-          <option value="previsto" ${filters.ver === 'previsto' ? 'selected' : ''}>só previsto</option>
-        </select>
-      </label>
-      <label class="t-filter t-filter--grow">Buscar em "Onde"
-        <input id="t-q" type="search" placeholder="ex.: mercado, aluguel…" value="${esc(filters.q)}">
-      </label>
-      ${filterSelect('t-f-cat', 'categoria', 'Categoria', distinct('categoria'))}
-      ${filterSelect('t-f-cartao', 'cartao', 'Cartão', distinct('cartao'))}
-      ${filterSelect('t-f-metodo', 'metodo', 'Método', distinct('metodo'))}
-      ${filterSelect('t-f-quem', 'quem', 'Quem', distinct('sender'))}
-      <button id="t-clear" class="c-btn--link" type="button">limpar filtros</button>
+      <div class="t-filters">
+        <label class="t-filter">Mês
+          <select id="t-month">${months.map(m =>
+            `<option value="${m}" ${m === ym ? 'selected' : ''}>${monthLabel(m)}${m === curYm ? ' (atual)' : ''}</option>`).join('')}</select>
+        </label>
+        <label class="t-filter">Ver
+          <select id="t-ver">
+            <option value="" ${filters.ver === '' ? 'selected' : ''}>tudo</option>
+            <option value="real" ${filters.ver === 'real' ? 'selected' : ''}>só realizado</option>
+            <option value="previsto" ${filters.ver === 'previsto' ? 'selected' : ''}>só previsto</option>
+          </select>
+        </label>
+        <label class="t-filter t-filter--grow">Buscar
+          <input id="t-q" type="search" placeholder="mercado, aluguel, farmácia…" value="${esc(filters.q)}">
+        </label>
+        ${filterSelect('t-f-cat', 'categoria', 'Categoria', distinct('categoria'))}
+        ${filterSelect('t-f-cartao', 'cartao', 'Cartão', distinct('cartao'))}
+        ${filterSelect('t-f-metodo', 'metodo', 'Método', distinct('metodo'))}
+        ${filterSelect('t-f-quem', 'quem', 'Quem', distinct('sender'))}
+      </div>
+      <div class="t-actions">
+        <button id="t-clear" class="t-clear" type="button" hidden>✕ limpar filtros</button>
+      </div>
     </div>
     <div id="t-table"></div>`
 
   const $ = s => el.querySelector(s)
+
+  // Light up active filters in cobalt and reveal "limpar" only when something is filtered.
+  const ACTIVE = { '#t-ver': 'ver', '#t-q': 'q', '#t-f-cat': 'categoria', '#t-f-cartao': 'cartao', '#t-f-metodo': 'metodo', '#t-f-quem': 'quem' }
+  function syncActive() {
+    let any = false
+    for (const [sel, key] of Object.entries(ACTIVE)) {
+      const on = !!filters[key]
+      $(sel).classList.toggle('is-active', on)
+      if (on) any = true
+    }
+    $('#t-clear').hidden = !any
+  }
 
   function apply() {
     let out = all.filter(it =>
@@ -188,17 +204,18 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
   }
 
   $('#t-month').onchange = e => onMonth(e.target.value)
-  $('#t-ver').onchange = e => { filters.ver = e.target.value; paint() }
-  $('#t-q').oninput = e => { filters.q = e.target.value; paint() }
-  $('#t-f-cat').onchange = e => { filters.categoria = e.target.value; paint() }
-  $('#t-f-cartao').onchange = e => { filters.cartao = e.target.value; paint() }
-  $('#t-f-metodo').onchange = e => { filters.metodo = e.target.value; paint() }
-  $('#t-f-quem').onchange = e => { filters.quem = e.target.value; paint() }
+  $('#t-ver').onchange = e => { filters.ver = e.target.value; syncActive(); paint() }
+  $('#t-q').oninput = e => { filters.q = e.target.value; syncActive(); paint() }
+  $('#t-f-cat').onchange = e => { filters.categoria = e.target.value; syncActive(); paint() }
+  $('#t-f-cartao').onchange = e => { filters.cartao = e.target.value; syncActive(); paint() }
+  $('#t-f-metodo').onchange = e => { filters.metodo = e.target.value; syncActive(); paint() }
+  $('#t-f-quem').onchange = e => { filters.quem = e.target.value; syncActive(); paint() }
   $('#t-clear').onclick = () => {
     filters.q = filters.categoria = filters.cartao = filters.metodo = filters.quem = filters.ver = ''
     for (const id of ['#t-q', '#t-f-cat', '#t-f-cartao', '#t-f-metodo', '#t-f-quem', '#t-ver']) $(id).value = ''
-    paint()
+    syncActive(); paint()
   }
 
+  syncActive()
   paint()
 }
