@@ -13,7 +13,9 @@ import { applyTheme, cycleTheme, currentTheme, ICONS, LABELS } from './theme.js'
 import { icon } from './ui.js'
 
 const $app = document.getElementById('app')
-let tab = 'resumo'
+const TABS = ['resumo', 'relatorios', 'tabela', 'contas']
+const tabFromHash = () => { const h = location.hash.slice(1); return TABS.includes(h) ? h : 'resumo' }
+let tab = tabFromHash()
 let repRange = '3m'
 let tabelaYm = null
 
@@ -26,7 +28,7 @@ function render() {
   else renderContas(view, render)
 
   for (const b of $app.querySelectorAll('.c-nav [data-t]'))
-    b.onclick = () => { tab = b.dataset.t; render(); scrollTo(0, 0) }
+    b.onclick = () => { location.hash = b.dataset.t } // hashchange drives the re-render
   $app.querySelector('#nav-add').onclick = () => openExpenseSheet({ onDone: render })
   const refreshBtn = $app.querySelector('#nav-refresh')
   refreshBtn.innerHTML = `${icon('refresh', 20)}Atualizar`
@@ -61,6 +63,13 @@ function handleSession(session) {
   if (!ALLOWED[user.email]) return renderBlocked($app)
   enter()
 }
+
+// Tab lives in the URL hash so a reload restores it instead of going Home.
+addEventListener('hashchange', () => {
+  const t = tabFromHash()
+  if (t === tab || !state.user || !ALLOWED[state.user.email]) return
+  tab = t; render(); scrollTo(0, 0)
+})
 
 applyTheme()
 registerSW()

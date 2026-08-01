@@ -246,7 +246,7 @@ function proximasPreview(venc, rec, fim) {
   return `Próximas: ${occs.map(fmtBRDate).join(' · ')}…`
 }
 
-function openContaSheet(c, onDone) {
+export function openContaSheet(c, onDone) {
   const isEdit = !!c
   let rec = isEdit ? c.recorrencia : 'mensal'
   const ov = sheet(`
@@ -389,7 +389,7 @@ function openCartaoSheet(c, onDone) {
   }
 }
 
-function openDividaSheet(d, onDone) {
+export function openDividaSheet(d, onDone) {
   const isEdit = !!d
   let periodo = isEdit ? (d.periodo || 'mensal') : 'mensal'
   const ov = sheet(`
