@@ -14,14 +14,14 @@ const filters = { q: '', categoria: '', cartao: '', metodo: '', quem: '', ver: '
 
 // Columns: `filter` names the per-column filter (in the filter row); md = desktop-only.
 const COLS = [
-  { key: 'data', label: 'Data' },
-  { key: 'ref', label: 'Ref', md: true },
-  { key: 'onde', label: 'Onde', main: true },
-  { key: 'categoria', label: 'Categoria', filter: 'categoria', field: 'categoria' },
-  { key: 'cartao', label: 'Cartão', md: true, filter: 'cartao', field: 'cartao' },
-  { key: 'metodo', label: 'Método', md: true, filter: 'metodo', field: 'metodo' },
-  { key: 'sender', label: 'Quem', md: true, filter: 'quem', field: 'sender' },
-  { key: 'valor', label: 'Valor', num: true },
+  { key: 'data', label: 'Data', w: '58px' },
+  { key: 'ref', label: 'Ref', md: true, w: '54px' },
+  { key: 'onde', label: 'Onde', main: true }, // no width → takes the remaining space
+  { key: 'categoria', label: 'Categoria', filter: 'categoria', field: 'categoria', w: '150px' },
+  { key: 'cartao', label: 'Cartão', md: true, filter: 'cartao', field: 'cartao', w: '118px' },
+  { key: 'metodo', label: 'Método', md: true, filter: 'metodo', field: 'metodo', w: '92px' },
+  { key: 'sender', label: 'Quem', md: true, filter: 'quem', field: 'sender', w: '52px' },
+  { key: 'valor', label: 'Valor', num: true, w: '112px' },
 ]
 
 const MES3 = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
@@ -142,7 +142,7 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
     const prev = sum(rows.filter(it => it.previsto).map(it => ({ valor: it.valor })))
     const arrow = k => sortKey === k ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
     const head = COLS.map(c =>
-      `<th class="${c.md ? 't-md ' : ''}t-sort" data-sort="${c.key}" ${c.num ? 'style="text-align:right"' : ''}
+      `<th class="${c.md ? 't-md ' : ''}t-sort" data-sort="${c.key}" style="${c.w ? `width:${c.w};` : ''}${c.num ? 'text-align:right' : ''}"
            role="button" tabindex="0" aria-sort="${sortKey === c.key ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}"
            title="Ordenar por ${c.label}">${c.label}${arrow(c.key)}</th>`).join('')
     const filterRow = COLS.map(c => {

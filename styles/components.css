@@ -76,7 +76,10 @@
 
 /* ---- Table (Tabela view) ---- */
 .c-table-wrap { overflow-x:auto; margin:0 calc(-1 * var(--s-4)); padding:0 var(--s-4); }
-.c-table { width:100%; border-collapse:collapse; font-size:var(--text-sm); }
+.c-table { width:100%; border-collapse:collapse; font-size:var(--text-sm); table-layout:fixed; }
+/* fixed layout: every column has a set width (Onde takes the rest), so the table
+   always fits and the Valor column is never clipped; long text truncates. */
+.c-table th, .c-table td { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .c-table th { text-align:left; font-weight:600; color:var(--color-text-muted);
               font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.4px;
               padding:var(--s-2) var(--s-2); border-bottom:1px solid var(--color-border); white-space:nowrap; }
@@ -250,7 +253,7 @@
 @media (min-width: 900px) { .c-nav__item--theme { width:auto; margin-left:auto; } }
 
 /* ---- Tabela: responsive columns + long-text safety ---- */
-.c-table .t-main { max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.c-table .t-main { max-width:none; } /* fixed layout gives Onde the remaining width */
 .c-table .t-md { display:none; }
 .c-table .t-md-inline { display:none; }
 .t-avatar { display:inline-flex; width:26px; height:26px; border-radius:var(--radius-full);
@@ -259,7 +262,6 @@
 @media (min-width: 700px) {
   .c-table .t-md { display:table-cell; }
   .c-table .t-md-inline { display:inline; }
-  .c-table .t-main { max-width:320px; }
 }
 
 /* ---- Nested add action inside cards ---- */
