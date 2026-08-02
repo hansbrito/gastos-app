@@ -49,23 +49,27 @@ function monthItems(ym) {
   const matchDivida = v => dividasMes.some(d => Math.abs(Number(d.valor_parcela) - v) <= Math.max(v * 0.01, 0.5))
 
   const realizadas = inMonth(ym).filter(isExpenseRec)
-  const temGasto = v => realizadas.some(r => Math.abs((Number(r.valor) || 0) - v) <= Math.max(v * 0.01, 0.5))
+  const recebidas = inMonth(ym).filter(isIncome)
+  const matchReal = (rows, v) => rows.some(r => Math.abs((Number(r.valor) || 0) - v) <= Math.max(v * 0.01, 0.5))
 
-  // contas of the month: unpaid → previsto; paid but with no matching gasto →
-  // realized (so a bill marked paid still shows and counts). Skip when a dívida
-  // is the source of truth, or when a realized gasto already covers it.
+  // contas of the month. Payable (despesa): unpaid → "a pagar", paid → "pago".
+  // Receivable (receita, recurring income): unpaid → "a receber", paid → "recebido".
+  // Skip when a realized gasto/receita already covers it (no double count), or
+  // (for despesa) when a dívida is the source of truth.
   for (const o of contasOcorrencias(`${ym}-01`, `${ym}-31`)) {
-    const v = Number(o.conta.valor) || 0
-    if (v && matchDivida(v)) continue
-    if (o.pago && temGasto(v)) continue // already counted as a realized gasto
+    const c = o.conta
+    const isRec = c.tipo === 'receita'
+    const v = Number(c.valor) || 0
+    if (!isRec && v && matchDivida(v)) continue
+    if (o.pago && matchReal(isRec ? recebidas : realizadas, v)) continue
     const paga = !!o.pago
     items.push({
-      kind: 'conta', obj: o.conta, previsto: !paga, neutral: false, paga,
+      kind: 'conta', obj: c, previsto: !paga, neutral: false, paga,
       ref: o.data.slice(0, 7), refOverride: false,
-      data: o.data, onde: o.conta.descricao || 'Conta',
-      categoria: '', catLabel: paga ? '📄 conta paga' : '📄 conta a pagar',
-      cartao: '', metodo: o.conta.linha_digitavel ? 'boleto' : '', sender: '',
-      valor: v, tipo: 'despesa',
+      data: o.data, onde: c.descricao || 'Conta', categoria: '',
+      catLabel: isRec ? (paga ? '💰 recebido' : '💰 a receber') : (paga ? '📄 conta paga' : '📄 conta a pagar'),
+      cartao: '', metodo: c.linha_digitavel ? 'boleto' : '', sender: '',
+      valor: v, tipo: isRec ? 'receita' : 'despesa',
     })
   }
 
@@ -147,7 +151,8 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
     const rows = apply()
     const realOut = sum(rows.filter(it => !it.previsto && !it.neutral && it.tipo !== 'receita').map(it => ({ valor: it.valor })))
     const realIn = sum(rows.filter(it => !it.previsto && !it.neutral && it.tipo === 'receita').map(it => ({ valor: it.valor })))
-    const prev = sum(rows.filter(it => it.previsto).map(it => ({ valor: it.valor })))
+    const prevOut = sum(rows.filter(it => it.previsto && it.tipo !== 'receita').map(it => ({ valor: it.valor })))
+    const prevIn = sum(rows.filter(it => it.previsto && it.tipo === 'receita').map(it => ({ valor: it.valor })))
     const arrow = k => sortKey === k ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
     const head = COLS.map(c =>
       `<th class="${c.md ? 't-md ' : ''}t-sort" data-sort="${c.key}" style="${c.w ? `width:${c.w};` : ''}${c.num ? 'text-align:right' : ''}"
@@ -168,7 +173,8 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
             ${rows.map((it, i) => {
               const d = it.data, isInc = it.tipo === 'receita'
               // one clear status on every row: a pagar (não pago) · pago · transferência
-              const chip = it.previsto ? ' <span class="c-chip c-chip--warning t-tag">a pagar</span>'
+              const chip = it.previsto
+                ? (isInc ? ' <span class="c-chip c-chip--neutral t-tag">a receber</span>' : ' <span class="c-chip c-chip--warning t-tag">a pagar</span>')
                 : it.neutral ? ' <span class="c-chip c-chip--neutral t-tag">transferência</span>'
                 : isInc ? ' <span class="c-chip c-chip--positive t-tag">recebido</span>'
                 : ' <span class="c-chip c-chip--positive t-tag">pago</span>'
@@ -185,10 +191,10 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
             }).join('')}
           </tbody>
           <tfoot><tr>
-            <th colspan="4" style="border-bottom:0">Pago: saídas ${brl(realOut)} · entradas ${brl(realIn)}${prev ? ` · A pagar ${brl(prev)}` : ''} · ${rows.length} item${rows.length > 1 ? 's' : ''}</th>
+            <th colspan="4" style="border-bottom:0">Pago: saídas ${brl(realOut)} · entradas ${brl(realIn)}${prevOut ? ` · A pagar ${brl(prevOut)}` : ''}${prevIn ? ` · A receber ${brl(prevIn)}` : ''} · ${rows.length} item${rows.length > 1 ? 's' : ''}</th>
             <th class="t-md" colspan="2" style="border-bottom:0"></th>
-            <th class="t-md" style="border-bottom:0;text-align:right;font-size:var(--text-xs);color:var(--color-text-muted)">esperado</th>
-            <th class="t-num num" style="border-bottom:0;font-size:var(--text-sm);color:var(--color-text)">${brl(realOut + prev)}</th>
+            <th class="t-md" style="border-bottom:0;text-align:right;font-size:var(--text-xs);color:var(--color-text-muted)">saídas esperadas</th>
+            <th class="t-num num" style="border-bottom:0;font-size:var(--text-sm);color:var(--color-text)">${brl(realOut + prevOut)}</th>
           </tr></tfoot>
         </table>
       </div>

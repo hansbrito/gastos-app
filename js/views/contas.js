@@ -22,25 +22,32 @@ function parcelaInfo(o) {
 }
 
 function occRow(o, i) {
-  const st = o.pago ? ['paga ✓', 'positive'] : o.atrasada ? ['atrasada', 'negative'] : ['pendente', 'neutral']
+  const rec = (o.conta.tipo || 'despesa') === 'receita'
+  const st = rec
+    ? (o.pago ? ['recebido ✓', 'positive'] : ['a receber', 'neutral'])
+    : (o.pago ? ['paga ✓', 'positive'] : o.atrasada ? ['atrasada', 'negative'] : ['pendente', 'neutral'])
   return `
     <div class="c-tx" data-occ="${i}" style="cursor:pointer" title="Tocar para opções">
-      <div class="c-tx__avatar" aria-hidden="true" style="${o.pago ? 'opacity:.45' : ''}">📄</div>
+      <div class="c-tx__avatar" aria-hidden="true" style="${o.pago ? 'opacity:.45' : ''}">${rec ? '💰' : '📄'}</div>
       <div class="c-tx__body" style="${o.pago ? 'opacity:.55' : ''}">
         <div class="c-tx__title">${esc(o.conta.descricao)}</div>
-        <div class="c-tx__meta"><span class="c-chip c-chip--${st[1]} t-tag" style="margin:0 6px 0 0">${st[0]}</span>vence ${fmtBRDate(o.data)} · ${REC_LABEL[o.conta.recorrencia]}${parcelaInfo(o)}${o.conta.linha_digitavel ? ' · 📋 código' : ''}</div>
+        <div class="c-tx__meta"><span class="c-chip c-chip--${st[1]} t-tag" style="margin:0 6px 0 0">${st[0]}</span>${rec ? 'recebe' : 'vence'} ${fmtBRDate(o.data)} · ${REC_LABEL[o.conta.recorrencia]}${parcelaInfo(o)}${o.conta.linha_digitavel ? ' · 📋 código' : ''}</div>
       </div>
-      <div class="c-tx__value num" style="${o.pago ? 'opacity:.55' : ''}">${o.conta.valor ? brl(Number(o.conta.valor)) : '—'}</div>
+      <div class="c-tx__value num" style="${o.pago ? 'opacity:.55' : ''}${rec ? ';color:var(--color-positive)' : ''}">${o.conta.valor ? (rec ? '+' : '') + brl(Number(o.conta.valor)) : '—'}</div>
     </div>`
 }
 
 let proximasRef = []
+let receberRef = []
 
 export function renderContas(el, onChanged) {
   proximasRef = []
   const today = todayISO(), ym = monthKey(today)
-  const doMes = contasOcorrencias(`${ym}-01`, `${ym}-31`)
+  const isDespesa = o => (o.conta.tipo || 'despesa') !== 'receita'
+  const doMes = contasOcorrencias(`${ym}-01`, `${ym}-31`).filter(isDespesa)
   const pendentesMes = doMes.filter(o => !o.pago)
+  // recurring income of the month (contas a receber)
+  const receberMes = contasOcorrencias(`${ym}-01`, `${ym}-31`).filter(o => !isDespesa(o))
 
   // projection: next 6 months — contas + dívidas installments (ask: vencimento as month reference)
   const projecao = []
@@ -49,7 +56,7 @@ export function renderContas(el, onChanged) {
     const dividasMes = state.dividas.filter(d => d.ativo && dividaVenceEm(d, m))
     // dívida é a fonte da verdade: não somar o boleto que representa uma parcela de dívida
     const matchDivida = v => v > 0 && dividasMes.some(d => Math.abs(Number(d.valor_parcela) - v) <= Math.max(v * 0.01, 0.5))
-    const occs = contasOcorrencias(`${m}-01`, `${m}-31`).filter(o => !matchDivida(Number(o.conta.valor) || 0))
+    const occs = contasOcorrencias(`${m}-01`, `${m}-31`).filter(o => isDespesa(o) && !matchDivida(Number(o.conta.valor) || 0))
     const contasTotal = occs.reduce((s, o) => s + Number(o.conta.valor || 0), 0)
     const divTotal = dividasMes.reduce((s, d) => s + Number(d.valor_parcela), 0)
     projecao.push({ m, contas: contasTotal, dividas: divTotal, total: contasTotal + divTotal, n: occs.length, nDiv: dividasMes.length })
@@ -71,10 +78,22 @@ export function renderContas(el, onChanged) {
           : empty('📄', 'Nenhuma conta este mês.<br>Mande um <b>boleto</b> no grupo (salva com código de barras) ou agende uma conta.'))
           + `<button class="c-add" id="add-conta">＋ nova conta</button>`)}
 
+        ${receberMes.length ? (() => {
+          receberRef = receberMes
+          const total = receberMes.reduce((s, o) => s + Number(o.conta.valor || 0), 0)
+          const receb = receberMes.filter(o => o.pago).reduce((s, o) => s + Number(o.conta.valor || 0), 0)
+          return `<h2>A receber em ${monthLabel(ym)}</h2>` + card(
+            receberMes.map((o, i) => occRow(o, 'r' + i)).join('') + `
+            <div style="display:flex;justify-content:space-between;border-top:1px solid var(--color-border);padding-top:10px;margin-top:4px" class="small">
+              <span class="muted">recebido ${brl(receb)}</span>
+              <b class="num" style="color:var(--color-positive)">total +${brl(total)}</b>
+            </div>`)
+        })() : ''}
+
         ${(() => {
           const proxFrom = shiftMonth(ym, 1) + '-01'
           const proxTo = shiftMonth(ym, 3) + '-31'
-          const prox = contasOcorrencias(proxFrom, proxTo).filter(o => !o.pago)
+          const prox = contasOcorrencias(proxFrom, proxTo).filter(o => !o.pago && isDespesa(o))
           if (!prox.length) return ''
           const shown = prox.slice(0, 40)
           proximasRef = shown
@@ -193,8 +212,10 @@ export function renderContas(el, onChanged) {
   el.querySelector('#add-divida').onclick = () => openDividaSheet(null, onChanged)
   for (const n of el.querySelectorAll('[data-occ]'))
     n.onclick = () => {
-      const k = n.dataset.occ
-      const o = String(k).startsWith('p') ? proximasRef[Number(k.slice(1))] : doMes[Number(k)]
+      const k = String(n.dataset.occ)
+      const o = k.startsWith('p') ? proximasRef[Number(k.slice(1))]
+        : k.startsWith('r') ? receberRef[Number(k.slice(1))]
+        : doMes[Number(k)]
       if (o) openOccSheet(o, onChanged)
     }
   for (const n of el.querySelectorAll('[data-card]'))
@@ -207,19 +228,20 @@ export function renderContas(el, onChanged) {
 
 function openOccSheet(o, onDone) {
   const c = o.conta
+  const rec = (c.tipo || 'despesa') === 'receita'
   const ov = sheet(`
     <h1>${esc(c.descricao)}</h1>
     <p class="muted small" style="margin-bottom:12px">
-      ${c.valor ? brl(Number(c.valor)) + ' · ' : ''}vence ${fmtBRDate(o.data)} · ${REC_LABEL[c.recorrencia]}${c.credor ? ' · ' + esc(c.credor) : ''}</p>
+      ${c.valor ? brl(Number(c.valor)) + ' · ' : ''}${rec ? 'recebe' : 'vence'} ${fmtBRDate(o.data)} · ${REC_LABEL[c.recorrencia]}${c.credor ? ' · ' + esc(c.credor) : ''}</p>
     ${c.linha_digitavel ? `
       <div class="c-field"><label>Linha digitável</label>
         <div style="display:flex;gap:8px">
           <input id="o-linha" readonly value="${esc(c.linha_digitavel)}" style="flex:1;font-size:13px">
           <button class="c-btn c-btn--ghost" id="o-copy" style="width:auto;padding:0 14px" aria-label="Copiar">${icon('copy', 18)}</button>
         </div></div>` : ''}
-    <button class="c-btn c-btn--primary" id="o-pago">${o.pago ? 'Desfazer pagamento' : '✓ Marcar como paga'}</button>
-    <button class="c-btn c-btn--ghost" id="o-edit" style="margin-top:8px">Editar conta</button>
-    <button class="c-btn c-btn--danger" id="o-del" style="margin-top:8px">Excluir conta</button>
+    <button class="c-btn c-btn--primary" id="o-pago">${o.pago ? (rec ? 'Desfazer recebimento' : 'Desfazer pagamento') : (rec ? '✓ Marcar como recebida' : '✓ Marcar como paga')}</button>
+    <button class="c-btn c-btn--ghost" id="o-edit" style="margin-top:8px">Editar ${rec ? 'receita' : 'conta'}</button>
+    <button class="c-btn c-btn--danger" id="o-del" style="margin-top:8px">Excluir ${rec ? 'receita' : 'conta'}</button>
     <p class="center" style="padding-bottom:0"><button class="c-btn--link" id="o-cancel">fechar</button></p>`)
   ov.querySelector('#o-cancel').onclick = () => ov.remove()
   const copy = ov.querySelector('#o-copy')
@@ -303,7 +325,7 @@ export function openContaSheet(c, onDone) {
       await saveConta({
         id: isEdit ? c.id : `${slug(descricao)}-${vencimento}`,
         descricao, credor: isEdit ? c.credor : null, valor, vencimento,
-        recorrencia: rec, fim, linha_digitavel: linha,
+        recorrencia: rec, fim, linha_digitavel: linha, tipo: isEdit ? (c.tipo || 'despesa') : 'despesa',
         pagos: isEdit ? (c.pagos || []) : [], ativo: true,
       })
       ov.remove(); toast('✔ Conta salva'); onDone()
