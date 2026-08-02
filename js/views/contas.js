@@ -146,8 +146,8 @@ export function renderContas(el, onChanged) {
               </div>`)
           }
           for (const d of ativas) {
-            const atual = parcelaAtual(d)
-            const pagas = atual - 1
+            // real paid count when tracked (dv.pagas), else assume paid up to the current parcela
+            const pagas = (d.pagas && d.pagas.length) ? d.pagas.length : Math.max(parcelaAtual(d) - 1, 0)
             const pct = pagas / d.parcelas_total * 100
             items.push(`
               <div class="c-cat" style="--cat-color:var(--color-warning)">
@@ -333,8 +333,9 @@ function cartaoCard(c) {
 function dividaCard(d) {
   const ym = monthKey(todayISO())
   const atual = parcelaAtual(d, ym)
-  const restam = d.parcelas_total - atual + 1
-  const pct = (atual - 1) / d.parcelas_total * 100
+  const pagasN = (d.pagas && d.pagas.length) ? d.pagas.length : Math.max(atual - 1, 0)
+  const restam = d.parcelas_total - pagasN
+  const pct = pagasN / d.parcelas_total * 100
   return `
     <div class="c-cat" data-divida="${esc(d.id)}" style="--cat-color:var(--color-warning);cursor:pointer" title="Tocar para editar">
       <div class="c-cat__emoji" aria-hidden="true">📄</div>
