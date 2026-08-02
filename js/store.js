@@ -278,7 +278,10 @@ export function ocorrencias(c, from, to) {
   const stepDays = { semanal: 7, quinzenal: 14 }
   const d = new Date(c.vencimento + 'T12:00:00')
   const end = c.fim ? new Date(c.fim + 'T12:00:00') : null
-  const lim = new Date(to + 'T12:00:00')
+  // numeric ctor rolls invalid days over (e.g. "2026-09-31" → Oct 1) instead of
+  // returning Invalid Date, which would make the loop yield nothing for 30/28-day months.
+  const [ly, lm, ld] = to.split('-').map(Number)
+  const lim = new Date(ly, lm - 1, ld, 12)
   for (let i = 0; i < 200 && d <= lim; i++) {
     if (end && d > end) break
     const iso = d.toLocaleDateString('sv-SE')
