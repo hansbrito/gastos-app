@@ -76,11 +76,14 @@ export function renderContas(el, onChanged) {
           const proxTo = shiftMonth(ym, 3) + '-31'
           const prox = contasOcorrencias(proxFrom, proxTo).filter(o => !o.pago)
           if (!prox.length) return ''
-          const shown = prox.slice(0, 12)
+          const shown = prox.slice(0, 40)
           proximasRef = shown
-          return `<h2>Próximas contas</h2>` + card(
-            shown.map((o, i) => occRow(o, 'p' + i)).join('') +
-            (prox.length > shown.length ? `<p class="muted small" style="margin-top:8px">… e mais ${prox.length - shown.length} nos próximos meses.</p>` : ''))
+          // show ~5, scroll the rest inside the card
+          const listHtml = shown.map((o, i) => occRow(o, 'p' + i)).join('')
+          const body = prox.length > 5
+            ? `<div class="c-scrolllist">${listHtml}</div><p class="muted small" style="margin:8px 0 0">${prox.length} contas nos próximos meses · role para ver todas</p>`
+            : listHtml
+          return `<h2>Próximas contas</h2>` + card(body)
         })()}
       </section>
 

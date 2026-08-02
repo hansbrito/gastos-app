@@ -87,14 +87,14 @@
 .c-table .t-muted { color:var(--color-text-muted); white-space:nowrap; }
 .c-table .t-cat { white-space:nowrap; }
 
-/* Tabela controls: month + per-column filters — fill the width, light up when active */
-.t-controls { margin-bottom:var(--s-4); }
-.t-filters { display:grid; grid-template-columns:1fr 1fr; gap:var(--s-3); align-items:end; }
-@media (min-width:720px) { .t-filters { grid-template-columns:repeat(4, 1fr); } }
+/* Tabela top bar: search grows, month + view compact; per-column filters live
+   in a filter row inside the table, so the top stays minimal. */
+.t-top { display:flex; flex-wrap:wrap; gap:var(--s-3); align-items:end; margin-bottom:var(--s-3); }
 .t-filter { min-width:0; display:flex; flex-direction:column; gap:6px;
   font-size:var(--text-xs); font-weight:600; color:var(--color-text-muted);
   text-transform:uppercase; letter-spacing:.5px; }
-.t-filter--grow { grid-column:span 2; }
+.t-filter--grow { flex:1 1 260px; }
+.t-top > .t-filter:not(.t-filter--grow) { flex:0 0 auto; width:168px; }
 .t-filter select, .t-filter input {
   width:100%; font-family:inherit; font-size:var(--text-base); font-weight:500;
   text-transform:none; letter-spacing:0; color:var(--color-text);
@@ -102,30 +102,47 @@
   border-radius:var(--radius-sm); height:var(--touch-target); padding:0 12px;
   -webkit-appearance:none; appearance:none;
   transition:border-color .15s ease, box-shadow .15s ease, background .15s ease; }
-.t-filter select {
-  padding-right:34px; cursor:pointer;
+.t-filter select, .t-colfilter {
+  cursor:pointer;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236e7076' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat:no-repeat; background-position:right 12px center; }
+  background-repeat:no-repeat; }
+.t-filter select { padding-right:34px; background-position:right 12px center; }
 .t-filter input::placeholder { color:var(--color-text-muted); opacity:.7; }
 .t-filter select:focus, .t-filter input:focus {
   outline:none; border-color:var(--color-primary); box-shadow:0 0 0 3px var(--color-primary-soft); }
 .t-filter select.is-active, .t-filter input.is-active {
   border-color:var(--color-primary); background-color:var(--color-primary-soft);
   color:var(--color-primary-strong); font-weight:600; }
-.t-actions { display:flex; justify-content:flex-end; min-height:0; margin-top:var(--s-3); }
-.t-actions:has(#t-clear[hidden]) { margin-top:0; }
-.t-clear { display:inline-flex; align-items:center; gap:6px; cursor:pointer;
-  font-family:inherit; font-size:var(--text-sm); font-weight:600; color:var(--color-text-muted);
-  background:var(--color-surface); border:1px solid var(--color-border);
-  border-radius:var(--radius-full); padding:7px 15px; min-height:36px;
+.t-clear { align-self:end; display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+  height:var(--touch-target); font-family:inherit; font-size:var(--text-sm); font-weight:600;
+  color:var(--color-text-muted); background:var(--color-surface); border:1px solid var(--color-border);
+  border-radius:var(--radius-full); padding:0 16px;
   transition:border-color .15s ease, color .15s ease, background .15s ease; }
 .t-clear:hover { border-color:var(--color-primary); color:var(--color-primary); background:var(--color-primary-soft); }
 .t-clear:focus-visible { outline:none; border-color:var(--color-primary); box-shadow:0 0 0 3px var(--color-primary-soft); }
 .t-clear[hidden] { display:none; }
-/* Sortable headers */
+/* Sortable headers + inline column filters */
 .c-table th.t-sort { cursor:pointer; user-select:none; }
+.c-table thead tr:first-child th { border-bottom:0; padding-bottom:2px; }
 .c-table th.t-sort:hover, .c-table th.t-sort[aria-sort]:not([aria-sort="none"]) { color:var(--color-primary); }
 .c-table th.t-sort:focus-visible { outline:2px solid var(--color-primary); outline-offset:-2px; }
+.t-filterrow th { padding:2px var(--s-2) 8px; }
+.t-colfilter { width:100%; max-width:180px; font-family:inherit; font-size:var(--text-sm); font-weight:500;
+  text-transform:none; letter-spacing:0; color:var(--color-text-muted);
+  background-color:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-sm);
+  height:34px; padding:0 24px 0 8px; -webkit-appearance:none; appearance:none;
+  background-position:right 7px center; transition:border-color .15s ease, background .15s ease, color .15s ease; }
+.t-colfilter:focus { outline:none; border-color:var(--color-primary); box-shadow:0 0 0 2px var(--color-primary-soft); }
+.t-colfilter.is-active { border-color:var(--color-primary); background-color:var(--color-primary-soft);
+  color:var(--color-primary-strong); font-weight:600; }
+.c-table .t-ref-over { color:var(--color-primary); font-weight:600; }
+
+/* Scrollable list: show ~5 rows, scroll the rest (Próximas contas) */
+.c-scrolllist { max-height:360px; overflow-y:auto; overscroll-behavior:contain;
+  margin:0 calc(-1 * var(--s-2)); padding:0 var(--s-2); }
+.c-scrolllist::-webkit-scrollbar { width:8px; }
+.c-scrolllist::-webkit-scrollbar-thumb { background:var(--color-border); border-radius:var(--radius-full); }
+.c-scrolllist > .c-tx:last-child { border-bottom:0; }
 /* Projected (previsto) rows: dashed, slightly muted so they read as "not yet realized" */
 .c-table tr.t-previsto td { color:var(--color-text-muted); }
 .c-table tr.t-previsto .t-main { color:var(--color-text); }
