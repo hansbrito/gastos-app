@@ -52,7 +52,7 @@ export function renderContas(el, onChanged) {
     const occs = contasOcorrencias(`${m}-01`, `${m}-31`).filter(o => !matchDivida(Number(o.conta.valor) || 0))
     const contasTotal = occs.reduce((s, o) => s + Number(o.conta.valor || 0), 0)
     const divTotal = dividasMes.reduce((s, d) => s + Number(d.valor_parcela), 0)
-    projecao.push({ m, contas: contasTotal, dividas: divTotal, total: contasTotal + divTotal, n: occs.length })
+    projecao.push({ m, contas: contasTotal, dividas: divTotal, total: contasTotal + divTotal, n: occs.length, nDiv: dividasMes.length })
   }
 
   const ativas = state.dividas.filter(d => d.ativo && parcelaAtual(d) <= d.parcelas_total)
@@ -170,7 +170,7 @@ export function renderContas(el, onChanged) {
             <div class="c-cat" style="--cat-color:var(--color-primary)">
               <div class="c-cat__body">
                 <div class="c-cat__line"><span>${monthLabel(p.m)}</span><span class="num">${brl(p.total)}</span></div>
-                <div class="muted small">${p.n ? `${p.n} conta${p.n > 1 ? 's' : ''} ${brl(p.contas)}` : ''}${p.n && p.dividas ? ' · ' : ''}${p.dividas ? `parcelas ${brl(p.dividas)}` : ''}${!p.total ? 'nada previsto' : ''}</div>
+                <div class="muted small">${p.n ? `${p.n} conta${p.n > 1 ? 's' : ''} ${brl(p.contas)}` : ''}${p.n && p.nDiv ? ' · ' : ''}${p.nDiv ? `${p.nDiv} parcela${p.nDiv > 1 ? 's' : ''} ${brl(p.dividas)}` : ''}${!p.total ? 'nada previsto' : ''}</div>
               </div>
             </div>`).join('')
           : empty('🔮', 'Sem contas futuras ainda — agende uma conta recorrente.'))}
