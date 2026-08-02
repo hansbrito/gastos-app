@@ -200,6 +200,27 @@ export async function deleteDivida(id) {
   if (error) throw error
   state.dividas = state.dividas.filter(d => d.id !== id)
 }
+/** Mark/unmark a dívida's parcela of month `ym` as paid. */
+export async function toggleDividaPaga(dv, ym) {
+  const pagas = (dv.pagas || []).includes(ym)
+    ? dv.pagas.filter(m => m !== ym)
+    : [...(dv.pagas || []), ym]
+  const { error } = await sb.from('dividas').update({ pagas }).eq('id', dv.id)
+  if (error) throw error
+  dv.pagas = pagas
+  const i = state.dividas.findIndex(d => d.id === dv.id)
+  if (i >= 0) state.dividas[i] = { ...state.dividas[i], pagas }
+}
+/** Is the dívida's parcela of `ym` paid? Manually marked, or auto-detected from
+ *  a realized expense that month matching the value or the creditor's name. */
+export function dividaParcelaPaga(dv, ym, rows = state.rows) {
+  if ((dv.pagas || []).includes(ym)) return true
+  const v = Number(dv.valor_parcela) || 0
+  const key = (dv.credor || '').toLowerCase().split(/\s|-/).filter(w => w.length >= 3)[0] || ''
+  return rows.some(r => refMonth(r) === ym && isExpenseRec(r) && (
+    Math.abs((Number(r.valor) || 0) - v) <= Math.max(v * 0.01, 0.5) ||
+    (key && (r.estabelecimento || '').toLowerCase().includes(key))))
+}
 
 /** Open-statement window for a card given its closing day. */
 export function faturaWindow(card, todayIso = todayISO()) {

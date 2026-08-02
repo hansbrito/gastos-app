@@ -6,7 +6,7 @@ import { state, brl, esc, todayISO, monthKey, monthLabel, inMonth, sum, dateOf, 
          isIncome, isExpenseRec, isNeutral, contasOcorrencias, dividaVenceEm } from '../store.js'
 import { card, empty } from '../ui.js'
 import { openExpenseSheet } from './expense-sheet.js'
-import { openContaSheet, openDividaSheet } from './contas.js'
+import { openContaSheet, openDividaSheet, openDividaParcelaSheet } from './contas.js'
 
 // Persist sort + filters across re-renders within the session.
 let sortKey = 'data', sortDir = 'desc'
@@ -69,12 +69,19 @@ function monthItems(ym) {
     })
   }
 
-  // projected dívida parcelas, unless a realized despesa already matches the value
+  // dívida parcelas of the month. If a realized expense already represents it
+  // (value or creditor match) → skip (the gasto shows as "pago", no double count).
+  // Else: paid if manually marked in dv.pagas ("pago"), otherwise "a pagar".
   for (const d of dividasMes) {
     const v = Number(d.valor_parcela) || 0
-    if (realizadas.some(r => Math.abs((Number(r.valor) || 0) - v) <= Math.max(v * 0.01, 0.5))) continue
+    const ckey = (d.credor || '').toLowerCase().split(/\s|-/).filter(w => w.length >= 3)[0] || ''
+    const gastoMatch = realizadas.some(r =>
+      Math.abs((Number(r.valor) || 0) - v) <= Math.max(v * 0.01, 0.5) ||
+      (ckey && (r.estabelecimento || '').toLowerCase().includes(ckey)))
+    if (gastoMatch) continue
+    const paga = (d.pagas || []).includes(ym)
     items.push({
-      kind: 'divida', obj: d, previsto: true, neutral: false, ref: ym, refOverride: false,
+      kind: 'divida', obj: d, previsto: !paga, neutral: false, paga, ref: ym, refOverride: false,
       data: `${ym}-${String(d.dia_vencimento).padStart(2, '0')}`,
       onde: d.credor, categoria: '', catLabel: '📆 parcela de dívida',
       cartao: '', metodo: '', sender: '', valor: v, tipo: 'despesa',
@@ -205,7 +212,7 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
       tr.onclick = () => {
         if (it.kind === 'real') openExpenseSheet({ rec: it.obj, onDone: onChanged })
         else if (it.kind === 'conta') openContaSheet(it.obj, onChanged)
-        else openDividaSheet(it.obj, onChanged)
+        else openDividaParcelaSheet(it.obj, it.ref, onChanged)
       }
     }
   }

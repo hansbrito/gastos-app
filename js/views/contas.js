@@ -3,7 +3,7 @@
 import { state, brl, esc, todayISO, monthKey, monthLabel, shiftMonth, fmtBRDate,
          contasOcorrencias, ocorrencias, saveConta, deleteConta, togglePago,
          faturaWindow, faturaAberta, parcelaAtual, dividaVenceEm, PERIODO_LABEL,
-         saveCartao, deleteCartao, saveDivida, deleteDivida } from '../store.js'
+         saveCartao, deleteCartao, saveDivida, deleteDivida, toggleDividaPaga } from '../store.js'
 import { card, empty, sheet, toast, icon } from '../ui.js'
 
 const slug = s => s.toLowerCase().replace(/\W+/g, '-')
@@ -389,6 +389,26 @@ function openCartaoSheet(c, onDone) {
       await saveCartao({ id: isEdit ? c.id : slug(nome), nome, limite, dia_fechamento: fecha, dia_vencimento: vence })
       ov.remove(); toast('✔ Cartão salvo'); onDone()
     } catch (err) { toast('Erro: ' + err.message); e.target.disabled = false }
+  }
+}
+
+/** Quick sheet for one month's parcela of a dívida: mark paid / undo / edit. */
+export function openDividaParcelaSheet(d, ym, onDone) {
+  const parcela = parcelaAtual(d, ym)
+  const paga = (d.pagas || []).includes(ym)
+  const ov = sheet(`
+    <h1>${esc(d.credor)}</h1>
+    <p class="muted small" style="margin-bottom:12px">
+      parcela ${parcela}/${d.parcelas_total} · ${brl(d.valor_parcela)} · vence dia ${d.dia_vencimento} · ${monthLabel(ym)}</p>
+    <button class="c-btn c-btn--primary" id="dp-toggle">${paga ? 'Desfazer pagamento' : '✓ Marcar parcela como paga'}</button>
+    <button class="c-btn c-btn--ghost" id="dp-edit" style="margin-top:8px">Editar dívida</button>
+    <p class="center" style="padding-bottom:0"><button class="c-btn--link" id="dp-cancel">fechar</button></p>`)
+  ov.querySelector('#dp-cancel').onclick = () => ov.remove()
+  ov.querySelector('#dp-edit').onclick = () => { ov.remove(); openDividaSheet(d, onDone) }
+  ov.querySelector('#dp-toggle').onclick = async e => {
+    e.target.disabled = true
+    try { await toggleDividaPaga(d, ym); ov.remove(); toast(paga ? 'Pagamento desfeito' : '✓ Parcela paga'); onDone() }
+    catch (err) { toast('Erro: ' + err.message); e.target.disabled = false }
   }
 }
 
