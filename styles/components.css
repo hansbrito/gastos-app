@@ -75,7 +75,11 @@
 .c-tx__value { font-weight:700; white-space:nowrap; }
 
 /* ---- Table (Tabela view) ---- */
-.c-table-wrap { overflow-x:auto; margin:0 calc(-1 * var(--s-4)); padding:0 var(--s-4); }
+/* The table is a responsive component: it adapts to ITS container's width
+   (container query), not the viewport — so it behaves the same wherever it's
+   placed. Levels: wide = full table · medium = drop secondary cols · narrow = cards. */
+.c-table-wrap { overflow-x:auto; margin:0 calc(-1 * var(--s-4)); padding:0 var(--s-4);
+  container-type:inline-size; container-name:tbl; }
 .c-table { width:100%; border-collapse:collapse; font-size:var(--text-sm); table-layout:fixed; }
 /* fixed layout: every column has a set width (Onde takes the rest), so the table
    always fits and the Valor column is never clipped; long text truncates. */
@@ -252,16 +256,44 @@
 .c-nav__item--theme { width:48px; color:var(--color-text-muted); }
 @media (min-width: 900px) { .c-nav__item--theme { width:auto; margin-left:auto; } }
 
-/* ---- Tabela: responsive columns + long-text safety ---- */
-.c-table .t-main { max-width:none; } /* fixed layout gives Onde the remaining width */
-.c-table .t-md { display:none; }
-.c-table .t-md-inline { display:none; }
+/* ---- Tabela: container-query responsive (multinível) + card view ---- */
+.c-table .t-main { max-width:none; }      /* Onde takes the remaining width */
+.c-table .t-md { display:table-cell; }    /* shown by default; container queries decide */
+.c-table .t-md-inline { display:inline; }
 .t-avatar { display:inline-flex; width:26px; height:26px; border-radius:var(--radius-full);
             background:var(--color-surface-2); color:var(--color-text-muted);
             align-items:center; justify-content:center; font-weight:700; font-size:var(--text-xs); }
-@media (min-width: 700px) {
-  .c-table .t-md { display:table-cell; }
-  .c-table .t-md-inline { display:inline; }
+
+/* medium container: drop the secondary columns (Ref/Cartão/Método/Quem) */
+@container tbl (max-width: 720px) {
+  .c-table .t-md { display:none; }
+}
+/* narrow container: each row becomes a card (rótulo: valor) */
+@container tbl (max-width: 430px) {
+  .c-table, .c-table tbody { display:block; }
+  .c-table thead { display:none; }
+  .c-table tbody tr { display:block; padding:var(--size-fluid-1, 12px);
+    border:1px solid var(--color-border); border-radius:var(--radius-sm);
+    margin-bottom:var(--s-2); box-shadow:var(--shadow-1); }
+  .c-table tbody tr:hover { background:var(--color-surface); }
+  .c-table tbody tr.t-previsto { border-left:3px solid var(--color-primary); }
+  .c-table tbody tr.t-previsto td:first-child { box-shadow:none; }
+  .c-table tbody td { display:flex; align-items:baseline; justify-content:space-between;
+    gap:var(--s-3); width:auto; padding:3px 0; border:0;
+    white-space:normal; overflow:visible; text-overflow:clip; text-align:right; }
+  .c-table tbody td::before { content:attr(data-label); flex:0 0 auto; text-align:left;
+    color:var(--color-text-muted); font-weight:600; font-size:var(--text-xs);
+    text-transform:uppercase; letter-spacing:.4px; }
+  .c-table tbody td.t-main { justify-content:flex-start; text-align:left; font-weight:700;
+    font-size:var(--font-size-1, 1.05rem); padding-bottom:6px; }
+  .c-table tbody td.t-main::before { display:none; }   /* Onde = título do card */
+  .c-table tbody td.t-md { display:flex; }             /* Ref/Cartão/Método viram linhas */
+  .c-table tbody td[data-label="Quem"] { display:none; }
+  .c-table tbody td.t-num { font-weight:700; }
+  .c-table tfoot { display:block; margin-top:var(--s-3); }
+  .c-table tfoot tr { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; }
+  .c-table tfoot th { display:block; border:0; padding:0; text-align:left; white-space:normal; }
+  .c-table tfoot th.t-md, .c-table tfoot th:empty { display:none; }
 }
 
 /* ---- Nested add action inside cards ---- */

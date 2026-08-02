@@ -14,14 +14,15 @@ const filters = { q: '', categoria: '', cartao: '', metodo: '', quem: '', ver: '
 
 // Columns: `filter` names the per-column filter (in the filter row); md = desktop-only.
 const COLS = [
-  { key: 'data', label: 'Data', w: '68px' },
-  { key: 'ref', label: 'Ref', md: true, w: '66px' },
+  // widths in ch (relative to the font) so they scale instead of being fixed px
+  { key: 'data', label: 'Data', w: '6ch' },
+  { key: 'ref', label: 'Ref', md: true, w: '7ch' },
   { key: 'onde', label: 'Onde', main: true }, // no width → takes the remaining space
-  { key: 'categoria', label: 'Categoria', filter: 'categoria', field: 'categoria', w: '150px' },
-  { key: 'cartao', label: 'Cartão', md: true, filter: 'cartao', field: 'cartao', w: '118px' },
-  { key: 'metodo', label: 'Método', md: true, filter: 'metodo', field: 'metodo', w: '92px' },
-  { key: 'sender', label: 'Quem', md: true, filter: 'quem', field: 'sender', w: '66px' },
-  { key: 'valor', label: 'Valor', num: true, w: '112px' },
+  { key: 'categoria', label: 'Categoria', filter: 'categoria', field: 'categoria', w: '15ch' },
+  { key: 'cartao', label: 'Cartão', md: true, filter: 'cartao', field: 'cartao', w: '11ch' },
+  { key: 'metodo', label: 'Método', md: true, filter: 'metodo', field: 'metodo', w: '9ch' },
+  { key: 'sender', label: 'Quem', md: true, filter: 'quem', field: 'sender', w: '6ch' },
+  { key: 'valor', label: 'Valor', num: true, w: '10ch' },
 ]
 
 const MES3 = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
@@ -160,14 +161,14 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
             ${rows.map((it, i) => {
               const d = it.data, isInc = it.tipo === 'receita'
               return `<tr data-i="${i}" class="${it.previsto ? 't-previsto' : ''}" title="${it.previsto ? 'Tocar para ajustar' : 'Tocar para corrigir'}">
-                <td class="t-muted num">${d.slice(8, 10)}/${d.slice(5, 7)}</td>
-                <td class="t-md num ${it.refOverride ? 't-ref-over' : 't-muted'}">${fmtRef(it.ref)}</td>
-                <td class="t-main">${esc(it.onde)}${it.previsto ? ' <span class="c-chip c-chip--neutral t-tag">previsto</span>' : it.paga ? ' <span class="c-chip c-chip--positive t-tag">pago</span>' : it.neutral ? ' <span class="c-chip c-chip--neutral t-tag">transferência</span>' : ''}</td>
-                <td class="t-cat"><span class="t-md-inline">${it.catLabel}</span></td>
-                <td class="t-md t-muted">${esc(it.cartao || '—')}</td>
-                <td class="t-md t-muted">${esc(it.metodo || '—')}</td>
-                <td class="t-md">${it.kind !== 'real' ? '<span class="t-muted">—</span>' : `<span class="t-avatar" title="${esc(it.sender)}">${esc((it.sender || '?').trim()[0]?.toUpperCase() || '?')}</span>`}</td>
-                <td class="t-num num" ${isInc ? 'style="color:var(--color-positive)"' : ''}>${isInc ? '+' : ''}${brl(it.valor)}</td>
+                <td data-label="Data" class="t-muted num">${d.slice(8, 10)}/${d.slice(5, 7)}</td>
+                <td data-label="Ref" class="t-md num ${it.refOverride ? 't-ref-over' : 't-muted'}">${fmtRef(it.ref)}</td>
+                <td data-label="Onde" class="t-main">${esc(it.onde)}${it.previsto ? ' <span class="c-chip c-chip--neutral t-tag">previsto</span>' : it.paga ? ' <span class="c-chip c-chip--positive t-tag">pago</span>' : it.neutral ? ' <span class="c-chip c-chip--neutral t-tag">transferência</span>' : ''}</td>
+                <td data-label="Categoria" class="t-cat"><span class="t-md-inline">${it.catLabel}</span></td>
+                <td data-label="Cartão" class="t-md t-muted">${esc(it.cartao || '—')}</td>
+                <td data-label="Método" class="t-md t-muted">${esc(it.metodo || '—')}</td>
+                <td data-label="Quem" class="t-md">${it.kind !== 'real' ? '<span class="t-muted">—</span>' : `<span class="t-avatar" title="${esc(it.sender)}">${esc((it.sender || '?').trim()[0]?.toUpperCase() || '?')}</span>`}</td>
+                <td data-label="Valor" class="t-num num" ${isInc ? 'style="color:var(--color-positive)"' : ''}>${isInc ? '+' : ''}${brl(it.valor)}</td>
               </tr>`
             }).join('')}
           </tbody>
