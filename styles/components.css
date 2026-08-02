@@ -46,6 +46,7 @@
 .c-chip--positive { background:color-mix(in srgb, var(--color-positive) 14%, transparent); color:var(--color-positive); }
 .c-chip--negative { background:color-mix(in srgb, var(--color-negative) 14%, transparent); color:var(--color-negative); }
 .c-chip--neutral  { background:var(--color-primary-soft); color:var(--color-primary); }
+.c-chip--warning  { background:color-mix(in srgb, var(--color-warning) 16%, transparent); color:var(--color-warning); }
 
 /* ---- Category row ---- */
 .c-cat { display:flex; align-items:center; gap:var(--s-3); padding:var(--s-2) 0; }
@@ -289,6 +290,7 @@
   .c-table tbody td.t-main::before { display:none; }   /* Onde = título do card */
   .c-table tbody td.t-md { display:flex; }             /* Ref/Cartão/Método viram linhas */
   .c-table tbody td[data-label="Quem"] { display:none; }
+  .c-table tbody td.t-empty { display:none; }   /* esconde secundários vazios no card */
   .c-table tbody td.t-num { font-weight:700; }
   .c-table tfoot { display:block; margin-top:var(--s-3); }
   .c-table tfoot tr { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; }

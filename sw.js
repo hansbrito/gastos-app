@@ -1,6 +1,6 @@
 // Network-first service worker: always fresh when online, app shell works
 // offline. Cache name is versioned — bump on breaking asset changes.
-const CACHE = 'gastos-v3'
+const CACHE = 'gastos-v4'
 
 self.addEventListener('install', e => self.skipWaiting())
 self.addEventListener('activate', e => {

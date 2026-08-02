@@ -10,7 +10,9 @@ body {
   padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
 }
 
-main { max-width:var(--content-max); margin:0 auto; padding:var(--s-4); }
+main { max-width:var(--content-max); margin:0 auto;
+       /* clear the (translucent) status bar / notch on installed PWAs */
+       padding:calc(var(--s-4) + env(safe-area-inset-top, 0px)) var(--s-4) var(--s-4); }
 
 h1 { font-size:var(--text-lg); }
 h2 { font-size:var(--text-base); color:var(--color-text-muted); font-weight:600; margin:var(--s-5) 0 var(--s-3); }

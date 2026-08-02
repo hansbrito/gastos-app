@@ -103,8 +103,8 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
       <label class="t-filter">Ver
         <select id="t-ver">
           <option value="" ${filters.ver === '' ? 'selected' : ''}>tudo</option>
-          <option value="real" ${filters.ver === 'real' ? 'selected' : ''}>só realizado</option>
-          <option value="previsto" ${filters.ver === 'previsto' ? 'selected' : ''}>só previsto</option>
+          <option value="real" ${filters.ver === 'real' ? 'selected' : ''}>pagos</option>
+          <option value="previsto" ${filters.ver === 'previsto' ? 'selected' : ''}>a pagar</option>
         </select>
       </label>
       <button id="t-clear" class="t-clear" type="button" hidden>✕ limpar filtros</button>
@@ -160,20 +160,25 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
           <tbody>
             ${rows.map((it, i) => {
               const d = it.data, isInc = it.tipo === 'receita'
+              // one clear status on every row: a pagar (não pago) · pago · transferência
+              const chip = it.previsto ? ' <span class="c-chip c-chip--warning t-tag">a pagar</span>'
+                : it.neutral ? ' <span class="c-chip c-chip--neutral t-tag">transferência</span>'
+                : isInc ? ' <span class="c-chip c-chip--positive t-tag">recebido</span>'
+                : ' <span class="c-chip c-chip--positive t-tag">pago</span>'
               return `<tr data-i="${i}" class="${it.previsto ? 't-previsto' : ''}" title="${it.previsto ? 'Tocar para ajustar' : 'Tocar para corrigir'}">
                 <td data-label="Data" class="t-muted num">${d.slice(8, 10)}/${d.slice(5, 7)}</td>
                 <td data-label="Ref" class="t-md num ${it.refOverride ? 't-ref-over' : 't-muted'}">${fmtRef(it.ref)}</td>
-                <td data-label="Onde" class="t-main">${esc(it.onde)}${it.previsto ? ' <span class="c-chip c-chip--neutral t-tag">previsto</span>' : it.paga ? ' <span class="c-chip c-chip--positive t-tag">pago</span>' : it.neutral ? ' <span class="c-chip c-chip--neutral t-tag">transferência</span>' : ''}</td>
+                <td data-label="Onde" class="t-main">${esc(it.onde)}${chip}</td>
                 <td data-label="Categoria" class="t-cat"><span class="t-md-inline">${it.catLabel}</span></td>
-                <td data-label="Cartão" class="t-md t-muted">${esc(it.cartao || '—')}</td>
-                <td data-label="Método" class="t-md t-muted">${esc(it.metodo || '—')}</td>
+                <td data-label="Cartão" class="t-md t-muted${it.cartao ? '' : ' t-empty'}">${esc(it.cartao || '—')}</td>
+                <td data-label="Método" class="t-md t-muted${it.metodo ? '' : ' t-empty'}">${esc(it.metodo || '—')}</td>
                 <td data-label="Quem" class="t-md">${it.kind !== 'real' ? '<span class="t-muted">—</span>' : `<span class="t-avatar" title="${esc(it.sender)}">${esc((it.sender || '?').trim()[0]?.toUpperCase() || '?')}</span>`}</td>
                 <td data-label="Valor" class="t-num num" ${isInc ? 'style="color:var(--color-positive)"' : ''}>${isInc ? '+' : ''}${brl(it.valor)}</td>
               </tr>`
             }).join('')}
           </tbody>
           <tfoot><tr>
-            <th colspan="4" style="border-bottom:0">Realizado: saídas ${brl(realOut)} · entradas ${brl(realIn)}${prev ? ` · Previsto ${brl(prev)}` : ''} · ${rows.length} item${rows.length > 1 ? 's' : ''}</th>
+            <th colspan="4" style="border-bottom:0">Pago: saídas ${brl(realOut)} · entradas ${brl(realIn)}${prev ? ` · A pagar ${brl(prev)}` : ''} · ${rows.length} item${rows.length > 1 ? 's' : ''}</th>
             <th class="t-md" colspan="2" style="border-bottom:0"></th>
             <th class="t-md" style="border-bottom:0;text-align:right;font-size:var(--text-xs);color:var(--color-text-muted)">esperado</th>
             <th class="t-num num" style="border-bottom:0;font-size:var(--text-sm);color:var(--color-text)">${brl(realOut + prev)}</th>
