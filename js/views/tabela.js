@@ -14,15 +14,15 @@ const filters = { q: '', categoria: '', cartao: '', metodo: '', quem: '', ver: '
 
 // Columns: `filter` names the per-column filter (in the filter row); md = desktop-only.
 const COLS = [
-  // widths in ch (relative to the font) so they scale instead of being fixed px
-  { key: 'data', label: 'Data', w: '6ch' },
-  { key: 'ref', label: 'Ref', md: true, w: '7ch' },
+  // widths in rem (relative to root font, predictable & scalable — not fixed px)
+  { key: 'data', label: 'Data', w: '4.4rem' },
+  { key: 'ref', label: 'Ref', md: true, w: '4.4rem' },
   { key: 'onde', label: 'Onde', main: true }, // no width → takes the remaining space
-  { key: 'categoria', label: 'Categoria', filter: 'categoria', field: 'categoria', w: '15ch' },
-  { key: 'cartao', label: 'Cartão', md: true, filter: 'cartao', field: 'cartao', w: '11ch' },
-  { key: 'metodo', label: 'Método', md: true, filter: 'metodo', field: 'metodo', w: '9ch' },
-  { key: 'sender', label: 'Quem', md: true, filter: 'quem', field: 'sender', w: '6ch' },
-  { key: 'valor', label: 'Valor', num: true, w: '10ch' },
+  { key: 'categoria', label: 'Categoria', filter: 'categoria', field: 'categoria', w: '9.4rem' },
+  { key: 'cartao', label: 'Cartão', md: true, filter: 'cartao', field: 'cartao', w: '7.4rem' },
+  { key: 'metodo', label: 'Método', md: true, filter: 'metodo', field: 'metodo', w: '5.8rem' },
+  { key: 'sender', label: 'Quem', md: true, filter: 'quem', field: 'sender', w: '4.2rem' },
+  { key: 'valor', label: 'Valor', num: true, w: '7rem' },
 ]
 
 const MES3 = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
