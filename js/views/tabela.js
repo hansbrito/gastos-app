@@ -166,7 +166,7 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
                 <td class="t-cat"><span class="t-md-inline">${it.catLabel}</span></td>
                 <td class="t-md t-muted">${esc(it.cartao || '—')}</td>
                 <td class="t-md t-muted">${esc(it.metodo || '—')}</td>
-                <td class="t-md">${it.previsto ? '<span class="t-muted">—</span>' : `<span class="t-avatar" title="${esc(it.sender)}">${esc((it.sender || '?').trim()[0]?.toUpperCase() || '?')}</span>`}</td>
+                <td class="t-md">${it.kind !== 'real' ? '<span class="t-muted">—</span>' : `<span class="t-avatar" title="${esc(it.sender)}">${esc((it.sender || '?').trim()[0]?.toUpperCase() || '?')}</span>`}</td>
                 <td class="t-num num" ${isInc ? 'style="color:var(--color-positive)"' : ''}>${isInc ? '+' : ''}${brl(it.valor)}</td>
               </tr>`
             }).join('')}
