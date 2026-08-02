@@ -47,22 +47,28 @@ function monthItems(ym) {
   const dividasMes = state.dividas.filter(d => d.ativo && dividaVenceEm(d, ym))
   const matchDivida = v => dividasMes.some(d => Math.abs(Number(d.valor_parcela) - v) <= Math.max(v * 0.01, 0.5))
 
-  // projected contas: unpaid occurrences, minus any that a dívida already covers
+  const realizadas = inMonth(ym).filter(isExpenseRec)
+  const temGasto = v => realizadas.some(r => Math.abs((Number(r.valor) || 0) - v) <= Math.max(v * 0.01, 0.5))
+
+  // contas of the month: unpaid → previsto; paid but with no matching gasto →
+  // realized (so a bill marked paid still shows and counts). Skip when a dívida
+  // is the source of truth, or when a realized gasto already covers it.
   for (const o of contasOcorrencias(`${ym}-01`, `${ym}-31`)) {
-    if (o.pago) continue
     const v = Number(o.conta.valor) || 0
     if (v && matchDivida(v)) continue
+    if (o.pago && temGasto(v)) continue // already counted as a realized gasto
+    const paga = !!o.pago
     items.push({
-      kind: 'conta', obj: o.conta, previsto: true, neutral: false, ref: o.data.slice(0, 7), refOverride: false,
+      kind: 'conta', obj: o.conta, previsto: !paga, neutral: false, paga,
+      ref: o.data.slice(0, 7), refOverride: false,
       data: o.data, onde: o.conta.descricao || 'Conta',
-      categoria: '', catLabel: '📄 conta a pagar',
+      categoria: '', catLabel: paga ? '📄 conta paga' : '📄 conta a pagar',
       cartao: '', metodo: o.conta.linha_digitavel ? 'boleto' : '', sender: '',
       valor: v, tipo: 'despesa',
     })
   }
 
   // projected dívida parcelas, unless a realized despesa already matches the value
-  const realizadas = inMonth(ym).filter(isExpenseRec)
   for (const d of dividasMes) {
     const v = Number(d.valor_parcela) || 0
     if (realizadas.some(r => Math.abs((Number(r.valor) || 0) - v) <= Math.max(v * 0.01, 0.5))) continue
@@ -156,7 +162,7 @@ export function renderTabela(el, selectedYm, onMonth, onChanged) {
               return `<tr data-i="${i}" class="${it.previsto ? 't-previsto' : ''}" title="${it.previsto ? 'Tocar para ajustar' : 'Tocar para corrigir'}">
                 <td class="t-muted num">${d.slice(8, 10)}/${d.slice(5, 7)}</td>
                 <td class="t-md num ${it.refOverride ? 't-ref-over' : 't-muted'}">${fmtRef(it.ref)}</td>
-                <td class="t-main">${esc(it.onde)}${it.previsto ? ' <span class="c-chip c-chip--neutral t-tag">previsto</span>' : it.neutral ? ' <span class="c-chip c-chip--neutral t-tag">transferência</span>' : ''}</td>
+                <td class="t-main">${esc(it.onde)}${it.previsto ? ' <span class="c-chip c-chip--neutral t-tag">previsto</span>' : it.paga ? ' <span class="c-chip c-chip--positive t-tag">pago</span>' : it.neutral ? ' <span class="c-chip c-chip--neutral t-tag">transferência</span>' : ''}</td>
                 <td class="t-cat"><span class="t-md-inline">${it.catLabel}</span></td>
                 <td class="t-md t-muted">${esc(it.cartao || '—')}</td>
                 <td class="t-md t-muted">${esc(it.metodo || '—')}</td>
