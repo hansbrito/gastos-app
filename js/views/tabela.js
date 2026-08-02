@@ -15,7 +15,7 @@ const filters = { q: '', categoria: '', cartao: '', metodo: '', quem: '', ver: '
 // Columns: `filter` names the per-column filter (in the filter row); md = desktop-only.
 const COLS = [
   { key: 'data', label: 'Data', w: '68px' },
-  { key: 'ref', label: 'Ref', md: true, w: '56px' },
+  { key: 'ref', label: 'Ref', md: true, w: '66px' },
   { key: 'onde', label: 'Onde', main: true }, // no width → takes the remaining space
   { key: 'categoria', label: 'Categoria', filter: 'categoria', field: 'categoria', w: '150px' },
   { key: 'cartao', label: 'Cartão', md: true, filter: 'cartao', field: 'cartao', w: '118px' },
