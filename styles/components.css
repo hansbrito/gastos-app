@@ -73,7 +73,8 @@
 .c-tx__body { flex:1; min-width:0; }
 .c-tx__title { font-weight:600; font-size:var(--text-sm);
                white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.c-tx__meta  { color:var(--color-text-muted); font-size:var(--text-sm); }
+.c-tx__meta  { color:var(--color-text-muted); font-size:var(--text-sm);
+               white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .c-tx__value { font-weight:700; white-space:nowrap; }
 
 /* ---- Table (Tabela view) ---- */

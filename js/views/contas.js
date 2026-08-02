@@ -28,9 +28,8 @@ function occRow(o, i) {
       <div class="c-tx__avatar" aria-hidden="true" style="${o.pago ? 'opacity:.45' : ''}">📄</div>
       <div class="c-tx__body" style="${o.pago ? 'opacity:.55' : ''}">
         <div class="c-tx__title">${esc(o.conta.descricao)}</div>
-        <div class="c-tx__meta">vence ${fmtBRDate(o.data)} · ${REC_LABEL[o.conta.recorrencia]}${parcelaInfo(o)}${o.conta.linha_digitavel ? ' · 📋 código' : ''}</div>
+        <div class="c-tx__meta"><span class="c-chip c-chip--${st[1]} t-tag" style="margin:0 6px 0 0">${st[0]}</span>vence ${fmtBRDate(o.data)} · ${REC_LABEL[o.conta.recorrencia]}${parcelaInfo(o)}${o.conta.linha_digitavel ? ' · 📋 código' : ''}</div>
       </div>
-      <span class="c-chip c-chip--${st[1]}" style="margin-right:8px">${st[0]}</span>
       <div class="c-tx__value num" style="${o.pago ? 'opacity:.55' : ''}">${o.conta.valor ? brl(Number(o.conta.valor)) : '—'}</div>
     </div>`
 }
