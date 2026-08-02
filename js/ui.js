@@ -42,8 +42,8 @@ export const catRow = ({ name, value, max, aside }) => `
     <div class="c-cat__body">
       <div class="c-cat__line"><span>${esc(name)}</span><span class="num">${brl(value)}</span></div>
       <div class="c-cat__bar"><i style="width:${Math.max(value / max * 100, 2).toFixed(0)}%"></i></div>
+      ${aside ? `<div class="c-cat__sub muted small num">${aside}</div>` : ''}
     </div>
-    ${aside ? `<div class="c-cat__aside muted small num">${aside}</div>` : ''}
   </div>`
 
 export const txRow = r => {
