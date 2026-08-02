@@ -47,11 +47,12 @@ export function renderContas(el, onChanged) {
   const projecao = []
   for (let i = 1; i <= 6; i++) {
     const m = shiftMonth(ym, i)
-    const occs = contasOcorrencias(`${m}-01`, `${m}-31`)
+    const dividasMes = state.dividas.filter(d => d.ativo && dividaVenceEm(d, m))
+    // dívida é a fonte da verdade: não somar o boleto que representa uma parcela de dívida
+    const matchDivida = v => v > 0 && dividasMes.some(d => Math.abs(Number(d.valor_parcela) - v) <= Math.max(v * 0.01, 0.5))
+    const occs = contasOcorrencias(`${m}-01`, `${m}-31`).filter(o => !matchDivida(Number(o.conta.valor) || 0))
     const contasTotal = occs.reduce((s, o) => s + Number(o.conta.valor || 0), 0)
-    const divTotal = state.dividas
-      .filter(d => d.ativo && dividaVenceEm(d, m))
-      .reduce((s, d) => s + Number(d.valor_parcela), 0)
+    const divTotal = dividasMes.reduce((s, d) => s + Number(d.valor_parcela), 0)
     projecao.push({ m, contas: contasTotal, dividas: divTotal, total: contasTotal + divTotal, n: occs.length })
   }
 
